@@ -118,10 +118,8 @@ void ViewerWidget::setPixel(int x, int y, const QColor& color)
 }
 
 //Draw functions
-void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
-{
+void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType){
 	painter->setPen(QPen(color));
-	algType = 2;
 	// DDA algoritm
 	if (algType == 0) {
 		float dx = end.x() - start.x();
@@ -138,7 +136,7 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 			y += yinc;
 		}
 	}
-	else if(algType == 1){
+	else if (algType == 1) {
 		//Bresenhamov algoritm for line
 		int x0 = start.x();
 		int y0 = start.y();
@@ -147,85 +145,64 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 
 		int dx = abs(x1 - x0);
 		int dy = abs(y1 - y0);
-		int sx = (x0 < x1) ? 1 : -1;
-		int sy = (y0 < y1) ? 1 : -1;
-		int err = dx - dy;
+		int step_x = (x0 < x1) ? 1 : -1;
+		int step_y = (y0 < y1) ? 1 : -1;
+
+		int error = dx - dy;
 
 		while (true) {
 			setPixel(x0, y0, color);
-			if (x0 == x1 && y0 == y1) break;
-			int e2 = 2 * err;
-			if (e2 > -dy) { err -= dy; x0 += sx; }
-			if (e2 < dx) { err += dx; y0 += sy; }
-		}
-		
-	}
-	else {
-		// Bresenhamov algoritm for circle
-		int r = sqrt(pow(end.x() - start.x(), 2) + pow(end.y() - start.y(), 2));
-		int x = 0;
-		int y = r;
-		int p = 1 - r;
+			if (x0 == x1 && y0 == y1)
+				break;
+			int double_error = 2 * error;
 
-		while (x <= y) {
-			// Plot the points only if within boundaries
-			if (start.x() + x >= 0 && start.x() + x < img->width() && start.y() + y >= 0 && start.y() + y < img->height())
-				setPixel(start.x() + x, start.y() + y, color);
-			if (start.x() - x >= 0 && start.x() - x < img->width() && start.y() + y >= 0 && start.y() + y < img->height())
-				setPixel(start.x() - x, start.y() + y, color);
-			if (start.x() + x >= 0 && start.x() + x < img->width() && start.y() - y >= 0 && start.y() - y < img->height())
-				setPixel(start.x() + x, start.y() - y, color);
-			if (start.x() - x >= 0 && start.x() - x < img->width() && start.y() - y >= 0 && start.y() - y < img->height())
-				setPixel(start.x() - x, start.y() - y, color);
-			if (start.x() + y >= 0 && start.x() + y < img->width() && start.y() + x >= 0 && start.y() + x < img->height())
-				setPixel(start.x() + y, start.y() + x, color);
-			if (start.x() - y >= 0 && start.x() - y < img->width() && start.y() + x >= 0 && start.y() + x < img->height())
-				setPixel(start.x() - y, start.y() + x, color);
-			if (start.x() + y >= 0 && start.x() + y < img->width() && start.y() - x >= 0 && start.y() - x < img->height())
-				setPixel(start.x() + y, start.y() - x, color);
-			if (start.x() - y >= 0 && start.x() - y < img->width() && start.y() - x >= 0 && start.y() - x < img->height())
-				setPixel(start.x() - y, start.y() - x, color);
-
-			if (p > 0) {
-				p += 2 * (x - y) + 5;
-				y--;
-
+			if (double_error > -dy) {
+				error -= dy;
+				x0 += step_x;
 			}
-			else {
-				p += 2 * x + 3;
+			if (double_error < dx) {
+				error += dx;
+				y0 += step_y;
 			}
-			x++;
 		}
 	}
 	update();
 }
 
-void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color)
-{
+void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color){
 	painter->setPen(QPen(color));
-	//painter->drawEllipse(start, end.x() - start.x(), end.y() - start.y());
-	// Bresenhamov algoritm for circle
-	float r = sqrt(pow(end.x() - start.x(), 2) + pow(end.y() - start.y(), 2));
-	float p1 = 1 - r;
-	float x = 0;
-	float y = r;
+	int r = sqrt(pow(end.x() - start.x(), 2) + pow(end.y() - start.y(), 2));
+	int x = 0;
+	int y = r;
+	int p = 1 - r;
+
 	while (x <= y) {
-		if (p1 < 0) {
-			p1 += 2 * x + 3;
-		}
-		else {
-			p1 += 2 * (x - y) + 5;
+		// Plot the points only if within boundaries
+		if (start.x() + x >= 0 && start.x() + x < img->width() && start.y() + y >= 0 && start.y() + y < img->height())
+			setPixel(start.x() + x, start.y() + y, color);
+		if (start.x() - x >= 0 && start.x() - x < img->width() && start.y() + y >= 0 && start.y() + y < img->height())
+			setPixel(start.x() - x, start.y() + y, color);
+		if (start.x() + x >= 0 && start.x() + x < img->width() && start.y() - y >= 0 && start.y() - y < img->height())
+			setPixel(start.x() + x, start.y() - y, color);
+		if (start.x() - x >= 0 && start.x() - x < img->width() && start.y() - y >= 0 && start.y() - y < img->height())
+			setPixel(start.x() - x, start.y() - y, color);
+		if (start.x() + y >= 0 && start.x() + y < img->width() && start.y() + x >= 0 && start.y() + x < img->height())
+			setPixel(start.x() + y, start.y() + x, color);
+		if (start.x() - y >= 0 && start.x() - y < img->width() && start.y() + x >= 0 && start.y() + x < img->height())
+			setPixel(start.x() - y, start.y() + x, color);
+		if (start.x() + y >= 0 && start.x() + y < img->width() && start.y() - x >= 0 && start.y() - x < img->height())
+			setPixel(start.x() + y, start.y() - x, color);
+		if (start.x() - y >= 0 && start.x() - y < img->width() && start.y() - x >= 0 && start.y() - x < img->height())
+			setPixel(start.x() - y, start.y() - x, color);
+
+		if (p > 0) {
+			p += 2 * (x - y) + 5;
 			y--;
 		}
+		else {
+			p += 2 * x + 3;
+		}
 		x++;
-		setPixel(start.x() + x, start.y() + y, color);
-		setPixel(start.x() - x, start.y() + y, color);
-		setPixel(start.x() + x, start.y() - y, color);
-		setPixel(start.x() - x, start.y() - y, color);
-		setPixel(start.x() + y, start.y() + x, color);
-		setPixel(start.x() - y, start.y() + x, color);
-		setPixel(start.x() + y, start.y() - x, color);
-		setPixel(start.x() - y, start.y() - x, color);
 	}
 	update();
 }
