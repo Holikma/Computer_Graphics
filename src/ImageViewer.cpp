@@ -74,7 +74,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
 			w->update();
 		}
-	}
+	}	
 }
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {
