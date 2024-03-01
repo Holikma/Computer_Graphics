@@ -44,6 +44,12 @@ public:
 	int getImgWidth() { return img->width(); };
 	int getImgHeight() { return img->height(); };
 
+	// Algorithms
+	void DDALine(QPoint start, QPoint end, QColor color);
+	void BresenhamLine(QPoint start, QPoint end, QColor color);
+	void BresenhamCircle(QPoint start, QPoint end, QColor color);
+
+
 	void clear();
 
 public slots:

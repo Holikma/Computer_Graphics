@@ -101,6 +101,19 @@
         <string>Draw</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
+        <item row="1" column="1">
+         <widget class="QToolButton" name="toolButtonDrawCircle">
+          <property name="text">
+           <string>Circle</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="autoExclusive">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0" colspan="2">
          <widget class="QComboBox" name="comboBoxLineAlg">
           <item>
@@ -128,10 +141,10 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="QToolButton" name="toolButtonDrawCircle">
+        <item row="2" column="0" colspan="2">
+         <widget class="QPushButton" name="toolButtonDrawPolygon">
           <property name="text">
-           <string>Circle</string>
+           <string>Polygon</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
