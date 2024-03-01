@@ -162,22 +162,14 @@ void ViewerWidget::BresenhamCircle(QPoint start, QPoint end, QColor color) {
 
 	while (x <= y) {
 		// kontrola hraníc krunice
-		if (start.x() + x >= 0 && start.x() + x < img->width() && start.y() + y >= 0 && start.y() + y < img->height())
-			setPixel(start.x() + x, start.y() + y, color);
-		if (start.x() - x >= 0 && start.x() - x < img->width() && start.y() + y >= 0 && start.y() + y < img->height())
-			setPixel(start.x() - x, start.y() + y, color);
-		if (start.x() + x >= 0 && start.x() + x < img->width() && start.y() - y >= 0 && start.y() - y < img->height())
-			setPixel(start.x() + x, start.y() - y, color);
-		if (start.x() - x >= 0 && start.x() - x < img->width() && start.y() - y >= 0 && start.y() - y < img->height())
-			setPixel(start.x() - x, start.y() - y, color);
-		if (start.x() + y >= 0 && start.x() + y < img->width() && start.y() + x >= 0 && start.y() + x < img->height())
-			setPixel(start.x() + y, start.y() + x, color);
-		if (start.x() - y >= 0 && start.x() - y < img->width() && start.y() + x >= 0 && start.y() + x < img->height())
-			setPixel(start.x() - y, start.y() + x, color);
-		if (start.x() + y >= 0 && start.x() + y < img->width() && start.y() - x >= 0 && start.y() - x < img->height())
-			setPixel(start.x() + y, start.y() - x, color);
-		if (start.x() - y >= 0 && start.x() - y < img->width() && start.y() - x >= 0 && start.y() - x < img->height())
-			setPixel(start.x() - y, start.y() - x, color);
+		if (isInside(start.x() + x, start.y() + y)) setPixel(start.x() + x, start.y() + y, color);
+		if (isInside(start.x() - x, start.y() + y)) setPixel(start.x() - x, start.y() + y, color);
+		if (isInside(start.x() + x, start.y() - y)) setPixel(start.x() + x, start.y() - y, color);
+		if (isInside(start.x() - x, start.y() - y)) setPixel(start.x() - x, start.y() - y, color);
+		if (isInside(start.x() + y, start.y() + x)) setPixel(start.x() + y, start.y() + x, color);
+		if (isInside(start.x() - y, start.y() + x)) setPixel(start.x() - y, start.y() + x, color);
+		if (isInside(start.x() + y, start.y() - x)) setPixel(start.x() + y, start.y() - x, color);
+		if (isInside(start.x() - y, start.y() - x)) setPixel(start.x() - y, start.y() - x, color);
 
 		if (p > 0) {
 			p += 2 * (x - y) + 5;

@@ -58,6 +58,7 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event){
 
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event){
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+	static QVector<QPoint> points;
 
 	if (e->button() == Qt::LeftButton && ui->toolButtonDrawLine->isChecked())
 	{
@@ -85,9 +86,22 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event){
 			w->update();
 		}
 	}
-	else if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked()){
-		
-		
+
+	else if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked()) {
+		points.append(e->pos());
+		w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+		printf("Point: %d, %d\n", e->pos().x(), e->pos().y());
+		w->update();
+	}
+	else if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
+		for (int i = 0; i < points.size() - 1; i++) {
+			w->drawLine(points[i], points[i + 1], globalColor, ui->comboBoxLineAlg->currentIndex());
+		}
+		w->drawLine(points[points.size() - 1], points[0], globalColor, ui->comboBoxLineAlg->currentIndex());
+		w->setDrawLineActivated(false);
+		w->update();
+		points.clear();
+
 	}
 }
 
