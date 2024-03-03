@@ -7,8 +7,8 @@ ImageViewer::ImageViewer(QWidget* parent) : QMainWindow(parent), ui(new Ui::Imag
 
 	ui->scrollArea->setBackgroundRole(QPalette::Dark);
 	ui->scrollArea->setWidgetResizable(true);
-	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
 	vW->setObjectName("ViewerWidget");
 	vW->installEventFilter(this);
@@ -56,12 +56,10 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event){
 	return QObject::eventFilter(obj, event);
 }
 
-void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event){
+void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
-	static QVector<QPoint> points;
 
-	if (e->button() == Qt::LeftButton && ui->toolButtonDrawLine->isChecked())
-	{
+	if (e->button() == Qt::LeftButton && ui->toolButtonDrawLine->isChecked()) {
 		if (w->getDrawLineActivated()) {
 			w->drawLine(w->getDrawLineBegin(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
 			w->setDrawLineActivated(false);
@@ -73,44 +71,58 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event){
 			w->update();
 		}
 	}
-	else if (e->button() == Qt::LeftButton && ui->toolButtonDrawCircle->isChecked())
+	if (e->button() == Qt::LeftButton && ui->toolButtonDrawCircle->isChecked())
 	{
-		if (w->getDrawLineActivated()) {
-			w->drawCircle(w->getDrawLineBegin(), e->pos(), globalColor);
-			w->setDrawLineActivated(false);
+		if (w->getDrawCircleActivated()) {
+			w->drawCircle(w->getDrawCircleBegin(), e->pos(), globalColor);
+			w->setDrawCircleActivated(false);
 		}
 		else {
-			w->setDrawLineBegin(e->pos());
-			w->setDrawLineActivated(true);
+			w->setDrawCircleBegin(e->pos());
+			w->setDrawCircleActivated(true);
 			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
 			w->update();
 		}
 	}
-
-	else if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked()) {
-		points.append(e->pos());
+	if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked()) {
+		w->AddPoint(e->pos());
 		w->setPixel(e->pos().x(), e->pos().y(), globalColor);
-		printf("Point: %d, %d\n", e->pos().x(), e->pos().y());
 		w->update();
 	}
-	else if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
-		for (int i = 0; i < points.size() - 1; i++) {
-			w->drawLine(points[i], points[i + 1], globalColor, ui->comboBoxLineAlg->currentIndex());
+	if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
+		for (int i = 0; i < w->getPoints().size() - 1; i++) {
+			w->drawLine(w->getPoints()[i], w->getPoints()[i + 1], globalColor, ui->comboBoxLineAlg->currentIndex());
 		}
-		w->drawLine(points[points.size() - 1], points[0], globalColor, ui->comboBoxLineAlg->currentIndex());
-		w->setDrawLineActivated(false);
+		w->drawLine(w->getPoints()[w->getPoints().size() - 1], w->getPoints()[0], globalColor, ui->comboBoxLineAlg->currentIndex());
+		w->setDragging(true);
+		ui->toolButtonDrawPolygon->setChecked(false);
 		w->update();
-		points.clear();
-
 	}
 }
 
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event){
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+	qDebug() << w->getDragStart();
 }
-void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event){
+void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
+	if (e->buttons() & Qt::LeftButton) {
+		if (ui->toolButtonTranslation->isChecked()) {
+			setCursor(Qt::ClosedHandCursor);
+			QPoint delta = e->pos() - w->getDragStart();
+			w->Translation(delta.x(), delta.y(), globalColor);
+			
+			w->update();
+			qDebug() << w->getDragStart();
+		}
+		
+	}
+	else {
+		w->setDragStart(e->pos());
+		setCursor(Qt::ArrowCursor); // Change cursor to indicate no dragging
+	}
 }
+
 void ImageViewer::ViewerWidgetLeave(ViewerWidget* w, QEvent* event){}
 void ImageViewer::ViewerWidgetEnter(ViewerWidget* w, QEvent* event){}
 void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event){
@@ -180,6 +192,7 @@ void ImageViewer::on_actionSave_as_triggered(){
 }
 void ImageViewer::on_actionClear_triggered(){
 	vW->clear();
+	vW->clearPoints();
 }
 void ImageViewer::on_actionExit_triggered(){
 	this->close();

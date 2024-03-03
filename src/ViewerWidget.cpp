@@ -203,12 +203,36 @@ void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color){
 	update();
 }
 
+//Transformations
+void ViewerWidget::Translation(int dx, int dy, QColor color) {
+	QVector<QPoint> translatedPoints;
+
+	for (int i = 0; i < points.size(); i++) {
+		// Calculate translated point coordinates without exceeding boundaries
+		int newX = qBound(0, points[i].x() + dx, width() - 1);
+		int newY = qBound(0, points[i].y() + dy, height() - 1);
+		QPoint translatedPoint(newX, newY);
+		translatedPoints.append(translatedPoint);
+
+	}
+
+	clear();
+	for (int i = 0; i < translatedPoints.size(); i++) {
+		if (i < translatedPoints.size() - 1) {
+			drawLine(translatedPoints[i], translatedPoints[i + 1], color);
+		}
+		else if (i == translatedPoints.size() - 1 && translatedPoints.size() > 1) {
+			drawLine(translatedPoints[i], translatedPoints[0], color);
+		}
+	}
+	update();
+}
+
 //Clear
 void ViewerWidget::clear(){
 	img->fill(Qt::white);
 	update();
 }
-
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event){
 	QPainter painter(this);
