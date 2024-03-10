@@ -37,7 +37,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>554</width>
+         <width>544</width>
          <height>557</height>
         </rect>
        </property>
@@ -113,33 +113,6 @@
         <string>Draw</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="1" column="1">
-         <widget class="QToolButton" name="toolButtonDrawCircle">
-          <property name="text">
-           <string>Circle</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-          <property name="autoExclusive">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0" colspan="2">
-         <widget class="QComboBox" name="comboBoxLineAlg">
-          <item>
-           <property name="text">
-            <string>DDA</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Bresenham</string>
-           </property>
-          </item>
-         </widget>
-        </item>
         <item row="1" column="0">
          <widget class="QToolButton" name="toolButtonDrawLine">
           <property name="text">
@@ -153,7 +126,20 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0" colspan="2">
+        <item row="1" column="1">
+         <widget class="QToolButton" name="toolButtonDrawCircle">
+          <property name="text">
+           <string>Circle</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="autoExclusive">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
          <widget class="QPushButton" name="toolButtonDrawPolygon">
           <property name="text">
            <string>Polygon</string>
@@ -170,6 +156,20 @@
           <property name="flat">
            <bool>false</bool>
           </property>
+         </widget>
+        </item>
+        <item row="0" column="0" colspan="3">
+         <widget class="QComboBox" name="comboBoxLineAlg">
+          <item>
+           <property name="text">
+            <string>DDA</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Bresenham</string>
+           </property>
+          </item>
          </widget>
         </item>
        </layout>

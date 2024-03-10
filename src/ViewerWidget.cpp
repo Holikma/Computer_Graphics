@@ -110,8 +110,10 @@ void ViewerWidget::DDALine(QPoint start, QPoint end, QColor color) {
 	float dx = end.x() - start.x();
 	float dy = end.y() - start.y();
 
-	// smernica pre každú os
+	// Calculate the number of steps
 	float steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+	// Increment for each step
 	float xinc = dx / steps;
 	float yinc = dy / steps;
 
@@ -119,7 +121,11 @@ void ViewerWidget::DDALine(QPoint start, QPoint end, QColor color) {
 	float y = start.y();
 
 	for (int i = 0; i < steps; i++) {
-		setPixel(round(x), round(y), color);
+		// Check if coordinates are within the clipping region
+		if (isInside(round(x), round(y))) {
+			setPixel(round(x), round(y), color);
+		}
+
 		x += xinc;
 		y += yinc;
 	}
@@ -181,6 +187,40 @@ void ViewerWidget::BresenhamCircle(QPoint start, QPoint end, QColor color) {
 		x++;
 	}
 }
+void ViewerWidget::Cyrus_Beck(QColor color) {
+	QPoint D = points[1] - points[0];
+	double tl = 0;
+	double tu = 1;
+	for (int i = 0; i < 1; i++) {
+		QPoint E0 = points[0];
+		QPoint E1 = points[1];
+		QPoint E(E1 - E0);
+		QPoint N(-E.y(), E.x());
+		double dotDN = dotProduct(D, N);
+		qDebug() << dotDN;
+		double dotWN = dotProduct((points[0] - points[1]), N);
+
+		if (dotDN != 0) {
+			double t = -dotWN / dotDN;
+			if (dotDN > 0 && t <= 1) {
+				tl = std::max(t, tl);
+			}
+			if (dotDN < 0 && t >= 0) {
+				tu = std::min(t, tu);
+			}
+		}
+	}
+	if (tl == 0 && tu == 1) {
+		drawLine(points[0], points[1], color, 1);
+		return;
+	}
+	else if (tl < tu) {
+		qDebug() << "Here5";
+		QPoint newStart = lines[0].p1() + (lines[0].p2() - lines[0].p1()) * tl;
+		QPoint newEnd = lines[0].p1() + (lines[0].p2() - lines[0].p1()) * tu;
+		drawLine(newStart, newEnd, color, 0);
+	}
+}
 
 //Draw functions
 void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType){
@@ -205,25 +245,27 @@ void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color){
 
 //Transformations
 void ViewerWidget::Translation(int dx, int dy, QColor color) {
-	QVector<QPoint> translatedPoints;
-
 	for (int i = 0; i < points.size(); i++) {
-		// Calculate translated point coordinates without exceeding boundaries
-		int newX = qBound(0, points[i].x() + dx, width() - 1);
-		int newY = qBound(0, points[i].y() + dy, height() - 1);
-		QPoint translatedPoint(newX, newY);
-		translatedPoints.append(translatedPoint);
-
+		setPoint(i, points[i].x() + dx, points[i].y() + dy);
 	}
-
+	for (int i = 0; i < lines.size(); i++) {
+		lines[i].setP1(QPoint(lines[i].p1().x() + dx, lines[i].p1().y() + dy));
+		lines[i].setP2(QPoint(lines[i].p2().x() + dx, lines[i].p2().y() + dy));
+	}
+	qDebug() << points;
+	qDebug() << lines;
 	clear();
-	for (int i = 0; i < translatedPoints.size(); i++) {
-		if (i < translatedPoints.size() - 1) {
-			drawLine(translatedPoints[i], translatedPoints[i + 1], color);
+	for (int i = 0; i < points.size() - 1; i++) {
+		if (isInside(points[i].x(), points[i].y()) && isInside(points[i + 1].x(), points[i + 1].y())) {
+			drawLine(points[i], points[i + 1], color, 0);
 		}
-		else if (i == translatedPoints.size() - 1 && translatedPoints.size() > 1) {
-			drawLine(translatedPoints[i], translatedPoints[0], color);
+		else {
+			qDebug() << "Here";
+			Cyrus_Beck(color);
 		}
+	}
+	if (isInside(points[points.size() - 1].x(), points[points.size() - 1].y()) && isInside(points[0].x(), points[0].y())) {
+		drawLine(points[points.size() - 1], points[0], color, 0);
 	}
 	update();
 }

@@ -55,7 +55,6 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event){
 
 	return QObject::eventFilter(obj, event);
 }
-
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 
@@ -87,35 +86,35 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 	if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked()) {
 		w->AddPoint(e->pos());
 		w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+		if (w->getPoints().size() > 1) {
+			w->AddLine(w->getPoints()[w->getPoints().size() - 2], w->getPoints()[w->getPoints().size() - 1]);
+			w->drawLine(w->getPoints()[w->getPoints().size() - 2], w->getPoints()[w->getPoints().size() - 1], globalColor, ui->comboBoxLineAlg->currentIndex());
+	
+		}
 		w->update();
 	}
 	if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
-		for (int i = 0; i < w->getPoints().size() - 1; i++) {
-			w->drawLine(w->getPoints()[i], w->getPoints()[i + 1], globalColor, ui->comboBoxLineAlg->currentIndex());
-		}
 		w->drawLine(w->getPoints()[w->getPoints().size() - 1], w->getPoints()[0], globalColor, ui->comboBoxLineAlg->currentIndex());
+		if (w->getPoints().size() > 2) {
+			w->AddLine(w->getPoints()[w->getPoints().size() - 1], w->getPoints()[0]);
+		}
 		w->setDragging(true);
 		ui->toolButtonDrawPolygon->setChecked(false);
 		w->update();
 	}
 }
-
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event){
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
-	qDebug() << w->getDragStart();
 }
 void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
-	if (e->buttons() & Qt::LeftButton) {
-		if (ui->toolButtonTranslation->isChecked()) {
-			setCursor(Qt::ClosedHandCursor);
-			QPoint delta = e->pos() - w->getDragStart();
-			w->Translation(delta.x(), delta.y(), globalColor);
-			
-			w->update();
-			qDebug() << w->getDragStart();
-		}
-		
+	static QPoint delta;
+	if (e->buttons() & Qt::LeftButton && w->getDragging()) {
+		setCursor(Qt::ClosedHandCursor);
+		delta = e->pos() - w->getDragStart();
+		w->Translation(delta.x(), delta.y(), globalColor);
+		w->setDragStart(e->pos());
+		w->update();
 	}
 	else {
 		w->setDragStart(e->pos());
