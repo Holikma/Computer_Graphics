@@ -30,7 +30,7 @@ class ViewerWidget :public QWidget {
 		QImage* getImage() { return img; };
 		bool isEmpty();
 		bool changeSize(int width, int height);
-		bool isInside(int x, int y) { return (x >= 0 && y >= 0 && x <= img->width() && y <= img->height()) ? true : false; }
+		bool isInside(int x, int y) { return (x > 0 && y > 0 && x < img->width() && y < img->height()) ? true : false; }
 
 		//Pixel functions
 		void setPixel(int x, int y, uchar r, uchar g, uchar b, uchar a = 255);

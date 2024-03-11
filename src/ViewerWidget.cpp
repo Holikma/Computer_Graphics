@@ -191,34 +191,35 @@ void ViewerWidget::Cyrus_Beck(QColor color) {
 	QPoint D = points[1] - points[0];
 	double tl = 0;
 	double tu = 1;
-	for (int i = 0; i < 1; i++) {
-		QPoint E0 = points[0];
-		QPoint E1 = points[1];
+	QVector<QPoint> plane = { QPoint(0, 0), QPoint(0, img->height()), QPoint(img->width(), img->height()), QPoint(img->width(), 0) };
+
+	for (int i = 0; i < 4; i++) {
+		QPoint E0 = plane[i];
+		QPoint E1 = plane[(i + 1) % 4]; 
 		QPoint E(E1 - E0);
-		QPoint N(-E.y(), E.x());
+
+		QPoint N(E.y(), -E.x());
 		double dotDN = dotProduct(D, N);
-		qDebug() << dotDN;
-		double dotWN = dotProduct((points[0] - points[1]), N);
+		double dotWN = dotProduct((points[0] - E0), N);
 
 		if (dotDN != 0) {
 			double t = -dotWN / dotDN;
 			if (dotDN > 0 && t <= 1) {
 				tl = std::max(t, tl);
 			}
-			if (dotDN < 0 && t >= 0) {
+			else if (dotDN < 0 && t >= 0) {
 				tu = std::min(t, tu);
 			}
 		}
 	}
 	if (tl == 0 && tu == 1) {
-		drawLine(points[0], points[1], color, 1);
-		return;
+		drawLine(points[0], points[1], color, 0);
 	}
+
 	else if (tl < tu) {
-		qDebug() << "Here5";
-		QPoint newStart = lines[0].p1() + (lines[0].p2() - lines[0].p1()) * tl;
-		QPoint newEnd = lines[0].p1() + (lines[0].p2() - lines[0].p1()) * tu;
-		drawLine(newStart, newEnd, color, 0);
+		QPoint newStart = points[0] + D * tl;
+		QPoint newEnd = points[0] + D * tu;
+		drawLine(newStart, newEnd, color, 1);
 	}
 }
 
@@ -248,6 +249,7 @@ void ViewerWidget::Translation(int dx, int dy, QColor color) {
 	for (int i = 0; i < points.size(); i++) {
 		setPoint(i, points[i].x() + dx, points[i].y() + dy);
 	}
+
 	for (int i = 0; i < lines.size(); i++) {
 		lines[i].setP1(QPoint(lines[i].p1().x() + dx, lines[i].p1().y() + dy));
 		lines[i].setP2(QPoint(lines[i].p2().x() + dx, lines[i].p2().y() + dy));
@@ -260,12 +262,10 @@ void ViewerWidget::Translation(int dx, int dy, QColor color) {
 			drawLine(points[i], points[i + 1], color, 0);
 		}
 		else {
-			qDebug() << "Here";
-			Cyrus_Beck(color);
+			if (isInside(points[i].x(), points[i].y()) || isInside(points[i + 1].x(), points[i + 1].y())) {
+				Cyrus_Beck(color);
+			}
 		}
-	}
-	if (isInside(points[points.size() - 1].x(), points[points.size() - 1].y()) && isInside(points[0].x(), points[0].y())) {
-		drawLine(points[points.size() - 1], points[0], color, 0);
 	}
 	update();
 }
