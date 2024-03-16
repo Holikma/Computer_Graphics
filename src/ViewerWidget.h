@@ -30,7 +30,7 @@ class ViewerWidget :public QWidget {
 		QImage* getImage() { return img; };
 		bool isEmpty();
 		bool changeSize(int width, int height);
-		bool isInside(int x, int y) { return (x > 0 && y > 0 && x < img->width() && y < img->height()) ? true : false; }
+		bool isInside(int x, int y) { return (x >= 0 && y >= 0 && x <= img->width() && y <= img->height()) ? true : false; }
 
 		//Pixel functions
 		void setPixel(int x, int y, uchar r, uchar g, uchar b, uchar a = 255);
@@ -79,12 +79,12 @@ class ViewerWidget :public QWidget {
 
 		//Helper functions
 		double dotProduct(QPoint a, QPoint b) {return a.x() * b.x() + a.y() * b.y(); }
-
 		// Algorithms
 		void DDALine(QPoint start, QPoint end, QColor color);
 		void BresenhamLine(QPoint start, QPoint end, QColor color);
 		void BresenhamCircle(QPoint start, QPoint end, QColor color);
 		void Cyrus_Beck(QColor color);
+		void Sutherland_Hodgeman(QColor color);
 		
 		//Transfomations
 		void Translation(int dx, int dy, QColor color);

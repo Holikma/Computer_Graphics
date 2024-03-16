@@ -20,7 +20,6 @@ void ViewerWidget::resizeWidget(QSize size){
 	this->setMinimumSize(size);
 	this->setMaximumSize(size);
 }
-
 //Image functions
 bool ViewerWidget::setImage(const QImage& inputImg){
 	if (img != nullptr) {
@@ -104,7 +103,6 @@ void ViewerWidget::setPixel(int x, int y, const QColor& color){
 		data[startbyte + 3] = color.alpha();
 	}
 }
-
 // Algorithms
 void ViewerWidget::DDALine(QPoint start, QPoint end, QColor color) {
 	float dx = end.x() - start.x();
@@ -195,7 +193,7 @@ void ViewerWidget::Cyrus_Beck(QColor color) {
 
 	for (int i = 0; i < 4; i++) {
 		QPoint E0 = plane[i];
-		QPoint E1 = plane[(i + 1) % 4]; 
+		QPoint E1 = plane[(i + 1) % 4];
 		QPoint E(E1 - E0);
 
 		QPoint N(E.y(), -E.x());
@@ -222,9 +220,8 @@ void ViewerWidget::Cyrus_Beck(QColor color) {
 		drawLine(newStart, newEnd, color, 1);
 	}
 }
-
 //Draw functions
-void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType){
+void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType) {
 	painter->setPen(QPen(color));
 	// DDA algoritm
 	if (algType == 0) {
@@ -236,14 +233,13 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 	}
 	update();
 }
-void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color){
+void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color) {
 
 	// Bresenhamov algoritmus pre kružnicu
 	painter->setPen(QPen(color));
 	BresenhamCircle(start, end, color);
 	update();
 }
-
 //Transformations
 void ViewerWidget::Translation(int dx, int dy, QColor color) {
 	for (int i = 0; i < points.size(); i++) {
@@ -253,32 +249,94 @@ void ViewerWidget::Translation(int dx, int dy, QColor color) {
 	for (int i = 0; i < lines.size(); i++) {
 		lines[i].setP1(QPoint(lines[i].p1().x() + dx, lines[i].p1().y() + dy));
 		lines[i].setP2(QPoint(lines[i].p2().x() + dx, lines[i].p2().y() + dy));
-	}
-	qDebug() << points;
-	qDebug() << lines;
+	};
 	clear();
 	for (int i = 0; i < points.size() - 1; i++) {
 		if (isInside(points[i].x(), points[i].y()) && isInside(points[i + 1].x(), points[i + 1].y())) {
 			drawLine(points[i], points[i + 1], color, 0);
 		}
 		else {
-			if (isInside(points[i].x(), points[i].y()) || isInside(points[i + 1].x(), points[i + 1].y())) {
-				Cyrus_Beck(color);
+			if (points.size() == 2) {
+				if (isInside(points[i].x(), points[i].y()) || isInside(points[i + 1].x(), points[i + 1].y())) {
+					Cyrus_Beck(color);
+				}
+			}
+			else if (points.size() > 2) {
+				if (isInside(points[i].x(), points[i].y()) || isInside(points[i + 1].x(), points[i + 1].y())) {
+					Sutherland_Hodgeman(color);
+				}
+				
+			}
+		}
+	}
+	if (isInside(points[points.size() - 1].x(), points[points.size() - 1].y()) && isInside(points[0].x(), points[0].y())) {
+		drawLine(points[points.size() - 1], points[0], color, 0);
+	}
+	else {
+		if (points.size() > 2) {
+			if (isInside(points[points.size() - 1].x(), points[points.size() - 1].y()) || isInside(points[0].x(), points[0].y())) {
+				Sutherland_Hodgeman(color);
 			}
 		}
 	}
 	update();
 }
-
 //Clear
-void ViewerWidget::clear(){
+void ViewerWidget::clear() {
 	img->fill(Qt::white);
 	update();
 }
 //Slots
-void ViewerWidget::paintEvent(QPaintEvent* event){
+void ViewerWidget::paintEvent(QPaintEvent* event) {
 	QPainter painter(this);
 	QRect area = event->rect();
 	painter.drawImage(area, *img, area);
 }
 
+void ViewerWidget::Sutherland_Hodgeman(QColor color) {
+	QVector<QPoint> W;
+	QVector<QPoint> polygon = points;
+	int edges[4] = {0,0,-499,-499};
+
+	for (int j = 0; j < 4; j++) {
+		QPoint S = polygon[polygon.size() -1]; // Initialize S to the last vertex
+		double xmin = edges[j];
+		for (int i = 0; i < polygon.size(); i++) {
+			QPoint Vi = polygon[i];
+
+			if (Vi.x() >= xmin) {
+				if (S.x() >= xmin) {
+					W.append(Vi);
+				}
+				else {
+					QPoint P = QPoint(xmin, S.y() + (xmin - S.x()) * (Vi.y() - S.y()) / (double)(Vi.x() - S.x()));
+					W.append(P);
+					W.append(Vi);
+				}
+			}
+			else {
+				if (S.x() >= xmin) {
+					QPoint P = QPoint(xmin, S.y() + (xmin - S.x()) * (Vi.y() - S.y()) / (double)(Vi.x() - S.x()));
+					W.append(P);
+				}
+			}
+			S = Vi;
+		}
+		polygon = W;
+		W.clear();
+
+		for (int k = 0; k < polygon.size(); k++){
+			QPoint swap = polygon[k];
+			polygon[k].setX(swap.y());
+			polygon[k].setY(-swap.x());
+		}
+	}
+
+	//Draw the clipped polygon
+	for (int i = 0; i < polygon.size() - 1; i++) {
+		drawLine(polygon[i], polygon[i + 1], color, 0);
+	}
+	drawLine(polygon[polygon.size() - 1], polygon[0], color, 0);
+	update();
+
+}
