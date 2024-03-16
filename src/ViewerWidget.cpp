@@ -220,79 +220,6 @@ void ViewerWidget::Cyrus_Beck(QColor color) {
 		drawLine(newStart, newEnd, color, 1);
 	}
 }
-//Draw functions
-void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType) {
-	painter->setPen(QPen(color));
-	// DDA algoritm
-	if (algType == 0) {
-		DDALine(start, end, color);
-	}
-	//Bresenhamov algoritm pre priamku - celoèíselná aritmetika
-	else if (algType == 1) {
-		BresenhamLine(start, end, color);
-	}
-	update();
-}
-void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color) {
-
-	// Bresenhamov algoritmus pre kružnicu
-	painter->setPen(QPen(color));
-	BresenhamCircle(start, end, color);
-	update();
-}
-//Transformations
-void ViewerWidget::Translation(int dx, int dy, QColor color) {
-	for (int i = 0; i < points.size(); i++) {
-		setPoint(i, points[i].x() + dx, points[i].y() + dy);
-	}
-
-	for (int i = 0; i < lines.size(); i++) {
-		lines[i].setP1(QPoint(lines[i].p1().x() + dx, lines[i].p1().y() + dy));
-		lines[i].setP2(QPoint(lines[i].p2().x() + dx, lines[i].p2().y() + dy));
-	};
-	clear();
-	for (int i = 0; i < points.size() - 1; i++) {
-		if (isInside(points[i].x(), points[i].y()) && isInside(points[i + 1].x(), points[i + 1].y())) {
-			drawLine(points[i], points[i + 1], color, 0);
-		}
-		else {
-			if (points.size() == 2) {
-				if (isInside(points[i].x(), points[i].y()) || isInside(points[i + 1].x(), points[i + 1].y())) {
-					Cyrus_Beck(color);
-				}
-			}
-			else if (points.size() > 2) {
-				if (isInside(points[i].x(), points[i].y()) || isInside(points[i + 1].x(), points[i + 1].y())) {
-					Sutherland_Hodgeman(color);
-				}
-				
-			}
-		}
-	}
-	if (isInside(points[points.size() - 1].x(), points[points.size() - 1].y()) && isInside(points[0].x(), points[0].y())) {
-		drawLine(points[points.size() - 1], points[0], color, 0);
-	}
-	else {
-		if (points.size() > 2) {
-			if (isInside(points[points.size() - 1].x(), points[points.size() - 1].y()) || isInside(points[0].x(), points[0].y())) {
-				Sutherland_Hodgeman(color);
-			}
-		}
-	}
-	update();
-}
-//Clear
-void ViewerWidget::clear() {
-	img->fill(Qt::white);
-	update();
-}
-//Slots
-void ViewerWidget::paintEvent(QPaintEvent* event) {
-	QPainter painter(this);
-	QRect area = event->rect();
-	painter.drawImage(area, *img, area);
-}
-
 void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 	QVector<QPoint> W;
 	QVector<QPoint> polygon = points;
@@ -324,7 +251,6 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 		}
 		polygon = W;
 		W.clear();
-
 		for (int k = 0; k < polygon.size(); k++){
 			QPoint swap = polygon[k];
 			polygon[k].setX(swap.y());
@@ -332,11 +258,123 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 		}
 	}
 
-	//Draw the clipped polygon
 	for (int i = 0; i < polygon.size() - 1; i++) {
 		drawLine(polygon[i], polygon[i + 1], color, 0);
 	}
 	drawLine(polygon[polygon.size() - 1], polygon[0], color, 0);
+
 	update();
 
+}
+//Draw functions
+void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType) {
+	painter->setPen(QPen(color));
+	// DDA algoritm
+	if (algType == 0) {
+		DDALine(start, end, color);
+	}
+	//Bresenhamov algoritm pre priamku - celoèíselná aritmetika
+	else if (algType == 1) {
+		BresenhamLine(start, end, color);
+	}
+	update();
+}
+void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color) {
+
+	// Bresenhamov algoritmus pre kružnicu
+	painter->setPen(QPen(color));
+	BresenhamCircle(start, end, color);
+	update();
+}
+//Transformations
+void ViewerWidget::Translation(int dx, int dy, QColor color) {
+	for (int i = 0; i < points.size(); i++) {
+		setPoint(i, points[i].x() + dx, points[i].y() + dy);
+	}
+	Render(points, color);
+	update();
+}
+void ViewerWidget::Rotation(int Angle, QColor color) {
+	// rotation based on first point
+	double angle = Angle * M_PI / 180;
+	QPoint center = points[0];
+	for (int i = 1; i < points.size(); i++) {
+		int x = center.x() + (points[i].x() - center.x()) * cos(angle) - (points[i].y() - center.y()) * sin(angle);
+		int y = center.y() + (points[i].x() - center.x()) * sin(angle) + (points[i].y() - center.y()) * cos(angle);
+		setPoint(i, x, y);
+	}
+	Render(points, color);
+}
+//Clear
+void ViewerWidget::clear() {
+	img->fill(Qt::white);
+	update();
+}
+//Slots
+void ViewerWidget::paintEvent(QPaintEvent* event) {
+	QPainter painter(this);
+	QRect area = event->rect();
+	painter.drawImage(area, *img, area);
+}
+
+void ViewerWidget::Render(QVector<QPoint> list, QColor color) {
+	clear();
+	for (int i = 0; i < list.size() - 1; i++) {
+		if (isInside(list[i].x(), list[i].y()) && isInside(list[i + 1].x(), list[i + 1].y())) {
+			drawLine(list[i], list[i + 1], color, 0);
+		}
+		else {
+			if (list.size() == 2) {
+				if (isInside(list[i].x(), list[i].y()) || isInside(list[i + 1].x(), list[i + 1].y())) {
+					Cyrus_Beck(color);
+				}
+			}
+			else if (list.size() > 2) {
+				if (isInside(list[i].x(), list[i].y()) || isInside(list[i + 1].x(), list[i + 1].y())) {
+					Sutherland_Hodgeman(color);
+				}
+			}
+		}
+	}
+	if (isInside(list[list.size() - 1].x(), list[list.size() - 1].y()) && isInside(list[0].x(), list[0].y())) {
+		drawLine(list[list.size() - 1], list[0], color, 0);
+	}
+	else {
+		if (list.size() > 2) {
+			if (isInside(list[list.size() - 1].x(), list[list.size() - 1].y()) || isInside(list[0].x(), list[0].y())) {
+				Sutherland_Hodgeman(color);
+			}
+		}
+	}
+	update();
+}
+
+void ViewerWidget::Scale(double sx, double sy, QColor color) {
+	QPoint center = points[0];
+	for (int i = 1; i < points.size(); i++) {
+		int x = center.x() + (points[i].x() - center.x()) * sx;
+		int y = center.y() + (points[i].y() - center.y()) * sy;
+		setPoint(i, x, y);
+	}
+	Render(points, color);
+}
+void ViewerWidget::Shear(double shx, QColor color) {
+	QPoint center = points[0];
+	for (int i = 1; i < points.size(); i++) {
+		int x = center.x() + (points[i].x() - center.x()) + shx * (points[i].y() - center.y());
+		int y = points[i].y();
+		setPoint(i, x, y);
+	}
+	Render(points, color);
+}
+
+void ViewerWidget::Flip(QColor color) {
+	//flip based on first line
+	QPoint center = points[0];
+	for (int i = 1; i < points.size(); i++) {
+		int x = center.x() - (points[i].x() - center.x());
+		int y = points[i].y();
+		setPoint(i, x, y);
+	}
+	Render(points, color);
 }

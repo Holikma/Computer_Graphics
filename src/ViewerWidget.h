@@ -14,7 +14,6 @@ class ViewerWidget :public QWidget {
 
 		bool isDragging = false;
 		QVector<QPoint> points;
-		QVector<QLine> lines;
 
 		QPoint DragStart = QPoint(0, 0);
 		QPoint drawLineBegin = QPoint(0, 0);
@@ -65,10 +64,6 @@ class ViewerWidget :public QWidget {
 		QPoint getPoint(int index) { return points[index]; }
 		void clearPoints() { points.clear(); }
 
-		//lines functions
-		QVector<QLine> getLines() { return lines; }
-		void AddLine(QPoint start, QPoint end) { lines.append(QLine(start, end)); }
-
 
 		uchar* getData() { return data; }
 		void setDataPtr() { data = img->bits(); }
@@ -87,9 +82,12 @@ class ViewerWidget :public QWidget {
 		void Sutherland_Hodgeman(QColor color);
 		
 		//Transfomations
-		void Translation(int dx, int dy, QColor color);
-
-
+		void Translation(int dx, int dy, QColor color); //Orez·vanie
+		void Rotation(int angle, QColor color); // Ot·Ëanie
+		void Render(QVector<QPoint> list, QColor color); //Vykreslenie
+		void Scale(double sx, double sy, QColor color); //Zv‰töenie
+		void Shear(double shx, QColor color); //Skosenie
+		void Flip(QColor color);
 		void clear();
 
 	public slots:

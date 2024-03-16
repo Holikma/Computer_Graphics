@@ -87,17 +87,12 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 		w->AddPoint(e->pos());
 		w->setPixel(e->pos().x(), e->pos().y(), globalColor);
 		if (w->getPoints().size() > 1) {
-			w->AddLine(w->getPoints()[w->getPoints().size() - 2], w->getPoints()[w->getPoints().size() - 1]);
 			w->drawLine(w->getPoints()[w->getPoints().size() - 2], w->getPoints()[w->getPoints().size() - 1], globalColor, ui->comboBoxLineAlg->currentIndex());
-	
 		}
 		w->update();
 	}
 	if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
 		w->drawLine(w->getPoints()[w->getPoints().size() - 1], w->getPoints()[0], globalColor, ui->comboBoxLineAlg->currentIndex());
-		if (w->getPoints().size() > 2) {
-			w->AddLine(w->getPoints()[w->getPoints().size() - 1], w->getPoints()[0]);
-		}
 		w->setDragging(true);
 		ui->toolButtonDrawPolygon->setChecked(false);
 		w->update();
@@ -203,4 +198,21 @@ void ImageViewer::on_pushButtonSetColor_clicked(){
 		ui->pushButtonSetColor->setStyleSheet(style_sheet);
 		globalColor = newColor;
 	}
+}
+void ImageViewer::on_toolButtonRotation_clicked() {
+	vW->Rotation(ui->spinBoxRot->value(), globalColor);
+	vW->update();
+}
+void ImageViewer::on_toolButtonScale_clicked() {
+	vW->Scale(ui->doubleSpinBoxScaleX->value(), ui->doubleSpinBoxScaleY->value(), globalColor);
+	vW->update();
+}
+void ImageViewer::on_toolButtonShear_clicked() {
+	vW->Shear(ui->doubleSpinBoxShearX->value(),  globalColor);
+	vW->update();
+}
+
+void ImageViewer::on_toolButtonFlip_clicked() {
+	vW->Flip(globalColor);
+	vW->update();
 }

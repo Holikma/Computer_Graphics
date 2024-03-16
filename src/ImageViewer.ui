@@ -37,7 +37,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>544</width>
+         <width>536</width>
          <height>557</height>
         </rect>
        </property>
@@ -192,7 +192,7 @@
          </widget>
         </item>
         <item row="4" column="0">
-         <widget class="QPushButton" name="tollButtonScale">
+         <widget class="QPushButton" name="toolButtonScale">
           <property name="text">
            <string>Scale</string>
           </property>
@@ -201,17 +201,8 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="2">
-         <widget class="QSpinBox" name="spinBox_4"/>
-        </item>
-        <item row="4" column="1">
-         <widget class="QSpinBox" name="spinBox_3"/>
-        </item>
-        <item row="4" column="2">
-         <widget class="QSpinBox" name="spinBox_2"/>
-        </item>
         <item row="2" column="2">
-         <widget class="QSpinBox" name="spinBox"/>
+         <widget class="QSpinBox" name="spinBoxRot"/>
         </item>
         <item row="2" column="0" colspan="2">
          <widget class="QPushButton" name="toolButtonRotation">
@@ -240,6 +231,57 @@
           </property>
           <property name="checkable">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QDoubleSpinBox" name="doubleSpinBoxScaleX">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimum">
+           <double>0.750000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>1.250000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.750000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="2">
+         <widget class="QDoubleSpinBox" name="doubleSpinBoxScaleY">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimum">
+           <double>0.750000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>1.250000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.250000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="2">
+         <widget class="QDoubleSpinBox" name="doubleSpinBoxShearX">
+          <property name="maximum">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.500000000000000</double>
           </property>
          </widget>
         </item>

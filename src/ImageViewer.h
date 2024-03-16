@@ -47,4 +47,8 @@ private slots:
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
+	void on_toolButtonRotation_clicked();
+	void on_toolButtonScale_clicked();
+	void on_toolButtonShear_clicked();
+	void on_toolButtonFlip_clicked();
 };
