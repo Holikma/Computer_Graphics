@@ -226,6 +226,9 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 	int edges[4] = {0,0,-499,-499};
 
 	for (int j = 0; j < 4; j++) {
+		if (polygon.size() == 0) {
+			break;
+		}
 		QPoint S = polygon[polygon.size() -1]; // Initialize S to the last vertex
 		double xmin = edges[j];
 		for (int i = 0; i < polygon.size(); i++) {
@@ -261,7 +264,9 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 	for (int i = 0; i < polygon.size() - 1; i++) {
 		drawLine(polygon[i], polygon[i + 1], color, 0);
 	}
-	drawLine(polygon[polygon.size() - 1], polygon[0], color, 0);
+	if (polygon.size() > 1) {
+		drawLine(polygon[polygon.size() - 1], polygon[0], color, 0);
+	}
 
 	update();
 
