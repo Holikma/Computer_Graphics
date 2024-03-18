@@ -370,10 +370,12 @@ void ViewerWidget::Shear(double shx, QColor color) {
 
 void ViewerWidget::Flip(QColor color) {
 	//flip based on first line
-	QPoint center = points[0];
-	for (int i = 1; i < points.size(); i++) {
+	QPoint start = points[0];
+	QPoint end = points[1];
+	QPoint center = QPoint((start.x() + end.x()) / 2, (start.y() + end.y()) / 2);
+	for (int i = 2; i < points.size(); i++) {
 		int x = center.x() - (points[i].x() - center.x());
-		int y = points[i].y();
+		int y = center.y() - (points[i].y() - center.y());
 		setPoint(i, x, y);
 	}
 	Render(points, color);
