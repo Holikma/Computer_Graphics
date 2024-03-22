@@ -17,6 +17,7 @@ private:
 	ViewerWidget* vW;
 
 	QColor globalColor;
+	QColor globalFillColor;
 	QSettings settings;
 	QMessageBox msgBox;
 
@@ -51,4 +52,9 @@ private slots:
 	void on_toolButtonScale_clicked();
 	void on_toolButtonShear_clicked();
 	void on_toolButtonFlip_clicked();
+	void on_toolButtonDrawLine_clicked();
+	void on_toolButtonDrawCircle_clicked();
+	void on_pushButtonSetFillColor_clicked();
+	void on_toolButtonDrawPolygon_clicked();
+	void on_toolButtonTranslation_clicked();
 };

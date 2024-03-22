@@ -3,9 +3,11 @@
 ImageViewer::ImageViewer(QWidget* parent) : QMainWindow(parent), ui(new Ui::ImageViewerClass){
 	ui->setupUi(this);
 	vW = new ViewerWidget(QSize(500, 500));
-	ui->scrollArea->setWidget(vW);
 
+	ui->scrollArea->setWidget(vW);
+	
 	ui->scrollArea->setBackgroundRole(QPalette::Dark);
+	ui->scrollArea->setAlignment(Qt::AlignCenter);
 	ui->scrollArea->setWidgetResizable(true);
 	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -14,8 +16,11 @@ ImageViewer::ImageViewer(QWidget* parent) : QMainWindow(parent), ui(new Ui::Imag
 	vW->installEventFilter(this);
 
 	globalColor = Qt::blue;
+	globalFillColor = Qt::red;
 	QString style_sheet = QString("background-color: #%1;").arg(globalColor.rgba(), 0, 16);
 	ui->pushButtonSetColor->setStyleSheet(style_sheet);
+	QString Fill_style_sheet = QString("background-color: #%1;").arg(globalFillColor.rgba(), 0, 16);
+	ui->pushButtonSetFillColor->setStyleSheet(Fill_style_sheet);
 }
 
 // Event filters
@@ -94,6 +99,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 	if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
 		w->drawLine(w->getPoints()[w->getPoints().size() - 1], w->getPoints()[0], globalColor, ui->comboBoxLineAlg->currentIndex());
 		w->setDragging(true);
+		ui->toolButtonTranslation->setChecked(true);
 		ui->toolButtonDrawPolygon->setChecked(false);
 		w->update();
 	}
@@ -211,8 +217,60 @@ void ImageViewer::on_toolButtonShear_clicked() {
 	vW->Shear(ui->doubleSpinBoxShearX->value(),  globalColor);
 	vW->update();
 }
-
 void ImageViewer::on_toolButtonFlip_clicked() {
 	vW->Flip(globalColor);
 	vW->update();
+}
+void ImageViewer::on_toolButtonDrawLine_clicked() {
+	if (ui->toolButtonDrawLine->isChecked()) {
+		ui->toolButtonDrawCircle->setEnabled(false);
+		ui->toolButtonDrawPolygon->setEnabled(false);
+		ui->comboBoxLineAlg->setEnabled(false);
+	}
+	else {
+		ui->toolButtonDrawCircle->setEnabled(true);
+		ui->toolButtonDrawPolygon->setEnabled(true);
+		ui->comboBoxLineAlg->setEnabled(true);
+	}
+}
+void ImageViewer::on_toolButtonDrawCircle_clicked() {
+	if (ui->toolButtonDrawCircle->isChecked()) {
+		ui->toolButtonDrawLine->setEnabled(false);
+		ui->toolButtonDrawPolygon->setEnabled(false);
+		ui->comboBoxLineAlg->setEnabled(false);
+	}
+	else {
+		ui->toolButtonDrawLine->setEnabled(true);
+		ui->toolButtonDrawPolygon->setEnabled(true);
+		ui->comboBoxLineAlg->setEnabled(true);
+	}
+}
+void ImageViewer::on_toolButtonDrawPolygon_clicked() {
+	if (ui->toolButtonDrawPolygon->isChecked()) {
+		ui->toolButtonDrawCircle->setEnabled(false);
+		ui->toolButtonDrawLine->setEnabled(false);
+		ui->comboBoxLineAlg->setEnabled(false);
+	}
+	else {
+		ui->toolButtonDrawCircle->setEnabled(true);
+		ui->toolButtonDrawLine->setEnabled(true);
+		ui->comboBoxLineAlg->setEnabled(true);
+	}
+}
+void ImageViewer::on_pushButtonSetFillColor_clicked() {
+	QColor newColor = QColorDialog::getColor(globalFillColor, this);
+	if (newColor.isValid()) {
+		QString style_sheet = QString("background-color: #%1;").arg(newColor.rgba(), 0, 16);
+		ui->pushButtonSetFillColor->setStyleSheet(style_sheet);
+		globalFillColor = newColor;
+	}
+}
+void ImageViewer::on_toolButtonTranslation_clicked() {
+	if (ui->toolButtonTranslation->isChecked()) {
+		vW->setDragging(true);
+	}
+	else {
+		vW->setDragging(false);
+	}
+
 }

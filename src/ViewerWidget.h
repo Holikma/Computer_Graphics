@@ -1,5 +1,8 @@
 #pragma once
 #include <QtWidgets>
+#include <stdio.h>
+#include <iostream>
+
 
 class ViewerWidget :public QWidget {
 	Q_OBJECT
@@ -74,6 +77,7 @@ class ViewerWidget :public QWidget {
 
 		//Helper functions
 		double dotProduct(QPoint a, QPoint b) {return a.x() * b.x() + a.y() * b.y(); }
+		bool Comp_points(QPoint p1, QPoint p2);
 		// Algorithms
 		void DDALine(QPoint start, QPoint end, QColor color);
 		void BresenhamLine(QPoint start, QPoint end, QColor color);
@@ -88,6 +92,7 @@ class ViewerWidget :public QWidget {
 		void Scale(double sx, double sy, QColor color); //Zvätšenie
 		void Shear(double shx, QColor color); //Skosenie
 		void Flip(QColor color);
+		void Scan_Line(QColor color);
 		void clear();
 
 	public slots:

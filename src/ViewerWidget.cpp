@@ -1,4 +1,4 @@
-#include   "ViewerWidget.h"
+Ôªø#include   "ViewerWidget.h"
 
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent) : QWidget(parent){
 	setAttribute(Qt::WA_StaticContents);
@@ -134,7 +134,7 @@ void ViewerWidget::BresenhamLine(QPoint start, QPoint end, QColor color) {
 	int x1 = end.x();
 	int y1 = end.y();
 
-	// v˝poËet smernice
+	// v√Ωpoƒçet smernice
 	int dx = abs(x1 - x0);
 	int dy = abs(y1 - y0);
 	int step_x = (x0 < x1) ? 1 : -1;
@@ -159,13 +159,13 @@ void ViewerWidget::BresenhamLine(QPoint start, QPoint end, QColor color) {
 	}
 }
 void ViewerWidget::BresenhamCircle(QPoint start, QPoint end, QColor color) {
-	int r = sqrt(pow(end.x() - start.x(), 2) + pow(end.y() - start.y(), 2)); //polomer kruûnice
+	int r = sqrt(pow(end.x() - start.x(), 2) + pow(end.y() - start.y(), 2)); //polomer kru≈ænice
 	int x = 0;
 	int y = r;
 	int p = 1 - r;
 
 	while (x <= y) {
-		// kontrola hranÌc kruûnice
+		// kontrola hran√≠c kru≈ænice
 		if (isInside(start.x() + x, start.y() + y)) setPixel(start.x() + x, start.y() + y, color);
 		if (isInside(start.x() - x, start.y() + y)) setPixel(start.x() - x, start.y() + y, color);
 		if (isInside(start.x() + x, start.y() - y)) setPixel(start.x() + x, start.y() - y, color);
@@ -271,14 +271,14 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 	update();
 
 }
-//Draw functions
+
 void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType) {
 	painter->setPen(QPen(color));
 	// DDA algoritm
 	if (algType == 0) {
 		DDALine(start, end, color);
 	}
-	//Bresenhamov algoritm pre priamku - celoËÌseln· aritmetika
+	//Bresenhamov algoritm pre priamku - celoƒç√≠seln√° aritmetika
 	else if (algType == 1) {
 		BresenhamLine(start, end, color);
 	}
@@ -286,9 +286,40 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 }
 void ViewerWidget::drawCircle(QPoint start, QPoint end, QColor color) {
 
-	// Bresenhamov algoritmus pre kruûnicu
+	// Bresenhamov algoritmus pre kru≈ænicu
 	painter->setPen(QPen(color));
 	BresenhamCircle(start, end, color);
+	update();
+}
+void ViewerWidget::Render(QVector<QPoint> list, QColor color) {
+	clear();
+	for (int i = 0; i < list.size() - 1; i++) {
+		if (isInside(list[i].x(), list[i].y()) && isInside(list[i + 1].x(), list[i + 1].y())) {
+			drawLine(list[i], list[i + 1], color, 0);
+		}
+		else {
+			if (list.size() == 2) {
+				 
+					Cyrus_Beck(color);
+				
+			}
+			else if (list.size() > 2) {
+				if (isInside(list[i].x(), list[i].y()) || isInside(list[i + 1].x(), list[i + 1].y())) {
+					Sutherland_Hodgeman(color);
+				}
+			}
+		}
+	}
+	if (isInside(list[list.size() - 1].x(), list[list.size() - 1].y()) && isInside(list[0].x(), list[0].y())) {
+		drawLine(list[list.size() - 1], list[0], color, 0);
+	}
+	else {
+		if (list.size() > 2) {
+			if (isInside(list[list.size() - 1].x(), list[list.size() - 1].y()) || isInside(list[0].x(), list[0].y())) {
+				Sutherland_Hodgeman(color);
+			}
+		}
+	}
 	update();
 }
 //Transformations
@@ -310,50 +341,6 @@ void ViewerWidget::Rotation(int Angle, QColor color) {
 	}
 	Render(points, color);
 }
-//Clear
-void ViewerWidget::clear() {
-	img->fill(Qt::white);
-	update();
-}
-//Slots
-void ViewerWidget::paintEvent(QPaintEvent* event) {
-	QPainter painter(this);
-	QRect area = event->rect();
-	painter.drawImage(area, *img, area);
-}
-
-void ViewerWidget::Render(QVector<QPoint> list, QColor color) {
-	clear();
-	for (int i = 0; i < list.size() - 1; i++) {
-		if (isInside(list[i].x(), list[i].y()) && isInside(list[i + 1].x(), list[i + 1].y())) {
-			drawLine(list[i], list[i + 1], color, 0);
-		}
-		else {
-			if (list.size() == 2) {
-				if (isInside(list[i].x(), list[i].y()) || isInside(list[i + 1].x(), list[i + 1].y())) {
-					Cyrus_Beck(color);
-				}
-			}
-			else if (list.size() > 2) {
-				if (isInside(list[i].x(), list[i].y()) || isInside(list[i + 1].x(), list[i + 1].y())) {
-					Sutherland_Hodgeman(color);
-				}
-			}
-		}
-	}
-	if (isInside(list[list.size() - 1].x(), list[list.size() - 1].y()) && isInside(list[0].x(), list[0].y())) {
-		drawLine(list[list.size() - 1], list[0], color, 0);
-	}
-	else {
-		if (list.size() > 2) {
-			if (isInside(list[list.size() - 1].x(), list[list.size() - 1].y()) || isInside(list[0].x(), list[0].y())) {
-				Sutherland_Hodgeman(color);
-			}
-		}
-	}
-	update();
-}
-
 void ViewerWidget::Scale(double sx, double sy, QColor color) {
 	QPoint center = points[0];
 	for (int i = 1; i < points.size(); i++) {
@@ -372,7 +359,6 @@ void ViewerWidget::Shear(double shx, QColor color) {
 	}
 	Render(points, color);
 }
-
 void ViewerWidget::Flip(QColor color) {
 	//flip based on first line
 	QPoint start = points[0];
@@ -384,4 +370,113 @@ void ViewerWidget::Flip(QColor color) {
 		setPoint(i, x, y);
 	}
 	Render(points, color);
+}
+
+bool ViewerWidget::Comp_points(QPoint p1, QPoint p2) {
+	if (p1.y() != p2.y())
+		return p1.y() < p2.y(); 
+	else
+		return p1.x() < p2.x(); 
+}
+
+void ViewerWidget::Scan_Line(QColor color) {
+	struct Edge {
+		QPoint start;
+		QPoint end;
+		double m;
+	};
+
+	QVector<QPoint> polygon = points;
+
+	std::sort(polygon.begin(), polygon.end(), [this](QPoint p1, QPoint p2) {return Comp_points(p1, p2);});
+	QVector<Edge> edges;
+
+	// Calculate edges from the sorted polygon points
+	for (int i = 0; i < polygon.size(); ++i) {
+		int next = (i + 1) % polygon.size(); // Get the next point index
+
+		// Skip horizontal edges
+		if (polygon[i].y() == polygon[next].y())
+			continue;
+
+		// Ensure start.y < end.y
+		QPoint start = polygon[i].y() < polygon[next].y() ? polygon[i] : polygon[next];
+		QPoint end = polygon[i].y() < polygon[next].y() ? polygon[next] : polygon[i];
+
+		double m = static_cast<double>(end.x() - start.x()) / (end.y() - start.y()); // Calculate slope
+
+		edges.push_back({ start, end, m });
+	}
+
+	// Sort the edges based on their y-coordinate
+	std::sort(edges.begin(), edges.end(), [](const Edge& e1, const Edge& e2) {
+		return e1.start.y() < e2.start.y();
+		});
+
+	// Initialize ymin and ymax
+	int ymin = edges.empty() ? 0 : edges.front().start.y();
+	int ymax = edges.empty() ? 0 : edges.back().start.y();
+
+	// Create an edge table
+	QVector<QVector<Edge>> edgeTable(ymax - ymin + 1);
+
+	// Populate the edge table
+	for (const auto& edge : edges) {
+		int y = edge.start.y();
+		edgeTable[y - ymin].push_back(edge);
+	}
+
+	// Create a list of active edges
+	QVector<Edge> activeEdges;
+
+	// Start scanline algorithm
+	for (int y = ymin; y <= ymax; ++y) {
+		// Move edges from edge table to active edges
+		for (const auto& edge : edgeTable[y - ymin]) {
+			activeEdges.push_back(edge);
+		}
+
+		// Sort active edges by x-coordinate
+		std::sort(activeEdges.begin(), activeEdges.end(), [](const Edge& e1, const Edge& e2) {
+			return e1.start.x() < e2.start.x();
+			});
+
+		// Process pairs of active edges
+		for (int j = 0; j < activeEdges.size()-1; j++) {
+			int x1 = activeEdges[j].start.x();
+			int x2 = activeEdges[j + 1].start.x();
+
+			// Fill pixels between x1 and x2 at current y
+			for (int x = x1; x <= x2; ++x) {
+				setPixel(x, y, color);
+			}
+
+
+
+			// Update edge values
+			activeEdges[j].start.setY(activeEdges[j].start.y() + 1);
+			activeEdges[j].start.setX(activeEdges[j].start.x() + activeEdges[j].m);
+
+			activeEdges[j + 1].start.setY(activeEdges[j + 1].start.y() + 1);
+			activeEdges[j + 1].start.setX(activeEdges[j + 1].start.x() + activeEdges[j + 1].m);
+		}
+
+		// Remove edges with Œîy = 0
+		activeEdges.erase(std::remove_if(activeEdges.begin(), activeEdges.end(), [y](const Edge& edge) {
+			return edge.end.y() <= y;
+			}), activeEdges.end());
+	}
+}
+
+
+//Clear
+void ViewerWidget::clear() {
+	img->fill(Qt::white);
+	update();
+}
+//Slots
+void ViewerWidget::paintEvent(QPaintEvent* event) {
+	QPainter painter(this);
+	QRect area = event->rect();
+	painter.drawImage(area, *img, area);
 }
