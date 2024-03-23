@@ -101,6 +101,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 		w->setDragging(true);
 		ui->toolButtonTranslation->setChecked(true);
 		ui->toolButtonDrawPolygon->setChecked(false);
+		ui->toolButtonDrawPolygon->setEnabled(false);
 		w->update();
 	}
 }
@@ -193,6 +194,14 @@ void ImageViewer::on_actionSave_as_triggered(){
 void ImageViewer::on_actionClear_triggered(){
 	vW->clear();
 	vW->clearPoints();
+	ui->toolButtonDrawCircle->setEnabled(true);
+	ui->toolButtonDrawCircle->setChecked(false);
+	ui->toolButtonDrawLine->setEnabled(true);
+	ui->toolButtonDrawLine->setChecked(false);
+	ui->toolButtonDrawPolygon->setEnabled(true);
+	ui->toolButtonDrawPolygon->setChecked(false);
+	ui->toolButtonTranslation->setChecked(false);
+	vW->setDragging(false);
 }
 void ImageViewer::on_actionExit_triggered(){
 	this->close();
@@ -272,5 +281,4 @@ void ImageViewer::on_toolButtonTranslation_clicked() {
 	else {
 		vW->setDragging(false);
 	}
-
 }

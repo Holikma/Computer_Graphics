@@ -353,9 +353,9 @@ void ViewerWidget::Scale(double sx, double sy, QColor color) {
 void ViewerWidget::Shear(double shx, QColor color) {
 	QPoint center = points[0];
 	for (int i = 1; i < points.size(); i++) {
-		int x = center.x() + (points[i].x() - center.x()) + shx * (points[i].y() - center.y());
+		double x = points[i].x() + shx * points[i].y();
 		int y = points[i].y();
-		setPoint(i, x, y);
+		setPoint(i, round(x), y);
 	}
 	Render(points, color);
 }
@@ -380,6 +380,7 @@ bool ViewerWidget::Comp_points(QPoint p1, QPoint p2) {
 }
 
 void ViewerWidget::Scan_Line(QColor color) {
+
 	struct Edge {
 		QPoint start;
 		QPoint end;
@@ -445,14 +446,10 @@ void ViewerWidget::Scan_Line(QColor color) {
 		for (int j = 0; j < activeEdges.size()-1; j++) {
 			int x1 = activeEdges[j].start.x();
 			int x2 = activeEdges[j + 1].start.x();
-
 			// Fill pixels between x1 and x2 at current y
 			for (int x = x1; x <= x2; ++x) {
 				setPixel(x, y, color);
 			}
-
-
-
 			// Update edge values
 			activeEdges[j].start.setY(activeEdges[j].start.y() + 1);
 			activeEdges[j].start.setX(activeEdges[j].start.x() + activeEdges[j].m);
