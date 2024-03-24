@@ -319,8 +319,10 @@ void ViewerWidget::Render(QVector<QPoint> list, QColor color) {
 	}
 	update();
 }
-//Transformations
 void ViewerWidget::Translation(int dx, int dy, QColor color) {
+	if (points.size() == 0) {
+		return;
+	}
 	for (int i = 0; i < points.size(); i++) {
 		setPoint(i, points[i].x() + dx, points[i].y() + dy);
 	}
@@ -399,11 +401,6 @@ struct Edge {
 };
 void ViewerWidget::Scan_Line(QColor color) {
 	QVector<QPoint> polygon = points;
-
-	if (polygon.size() <= 3) {
-		Triangle_Fill(color);
-		return;
-	}
 	QVector<Edge> edges;
 
 	for (int i = 0; i < polygon.size(); i++) {
@@ -497,60 +494,7 @@ void ViewerWidget::Scan_Line(QColor color) {
 		y++;
 	}
 }
-void ViewerWidget::UpperTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2) {
-	double slope1 = (double)(C.x() - A.x()) / (C.y() - A.y());
-	double slope2 = (double)(C.x() - B.x()) / (C.y() - B.y());
-
-	for (int y = C.y(); y < A.y(); y--) {
-		int x1 = C.x() - (C.y() - y) * slope1;
-		int x2 = C.x() - (C.y() - y) * slope2;
-		for (int x = x1; x < x2; x++) {
-			QPoint P(x, y);
-			if (isInside(x, y) && isInsideTriangle(A, B, C, P)) {
-				double d0 = distance(A, P);
-				double d1 = distance(B, P);
-				double d2 = distance(C, P);
-				if (d0 < d1 && d0 < d2) {
-					setPixel(x, y, C0);
-				}
-				else if (d1 < d0 && d1 < d2) {
-					setPixel(x, y, C1);
-				}
-				else if (d2 < d0 && d2 < d1) {
-					setPixel(x, y, C2);
-				}
-			}
-		}
-	}
-}
-void ViewerWidget::LowerTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2) {
-	double slope1 = (double)(A.x() - B.x()) / (A.y() - B.y());
-	double slope2 = (double)(A.x() - C.x()) / (A.y() - C.y());
-
-	for (int y = A.y(); y < C.y(); y++) {
-		int x1 = A.x() - (A.y() - y) * slope1;
-		int x2 = A.x() - (A.y() - y) * slope2;
-		for (int x = x1; x < x2; x++) {
-			QPoint P(x, y);
-			if (isInside(x, y) && isInsideTriangle(A, B, C, P)) {
-				double d0 = distance(A, P);
-				double d1 = distance(B, P);
-				double d2 = distance(C, P);
-				if (d0 < d1 && d0 < d2) {
-					setPixel(x, y, C0);
-				}
-				else if (d1 < d0 && d1 < d2) {
-					setPixel(x, y, C1);
-				}
-				else if (d2 < d0 && d2 < d1) {
-					setPixel(x, y, C2);
-				}
-			}
-		}
-	}
-
-}
-void ViewerWidget::Triangle_Fill(QColor color){
+void ViewerWidget::Triangle_Fill(int algType){
 	QVector<QPoint> sorted = points;
 
 	std::sort(sorted.begin(), sorted.end(), [](const QPoint& p1, const QPoint& p2) {
@@ -565,8 +509,7 @@ void ViewerWidget::Triangle_Fill(QColor color){
 	QColor C1 = Qt::red;
 	QColor C2 = Qt::green;
 
-	if (T0.y() == T1.y()) {
-		qDebug() << "Lower";
+	if (T0.y() == T1.y()) { //lower triangle
 		for (int y = T1.y(); y <= T2.y(); y++) {
 				int x1 = ((y - T0.y()) * (T2.x() - T0.x()) / (T2.y() - T0.y()) + T0.x());
 				int x2 = ((y - T1.y()) * (T2.x() - T1.x()) / (T2.y() - T1.y()) + T1.x());
@@ -590,8 +533,7 @@ void ViewerWidget::Triangle_Fill(QColor color){
 				}
 			}
 	}
-	else if (T1.y() == T2.y()) {
-		qDebug() << "Upper";
+	else if (T1.y() == T2.y()) { //upper triangle
 		for (int y = T0.y(); y <= T1.y(); y++) {
 			int x1 = ((y - T0.y()) * (T1.x() - T0.x()) / (T1.y() - T0.y()) + T0.x());
 			int x2 = ((y - T0.y()) * (T2.x() - T0.x()) / (T2.y() - T0.y()) + T0.x());
@@ -614,8 +556,7 @@ void ViewerWidget::Triangle_Fill(QColor color){
 			}
 		}
 	}
-	else {
-		qDebug() << "Split";
+	else { //general case
 		double m = (double)(T2.y() - T0.y()) / (T2.x() - T0.x());
 		QPoint P((T1.y() - T0.y()) / m + T0.x(), T1.y());
 		if (T1.x() < P.x()) {
@@ -708,6 +649,14 @@ void ViewerWidget::Triangle_Fill(QColor color){
 				}
 			}
 		}
+	}
+}
+void ViewerWidget::Fill(int algType, QColor color) {
+	if (points.size() == 3) {
+		Triangle_Fill(algType);
+	}
+	else if (points.size() > 3) {
+		Scan_Line(color);
 	}
 }
 //Clear

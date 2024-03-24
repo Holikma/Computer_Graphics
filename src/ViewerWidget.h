@@ -97,9 +97,9 @@ class ViewerWidget :public QWidget {
 		void Shear(double shx, QColor color); //Skosenie
 		void Flip(QColor color);
 		void Scan_Line(QColor color);
-		void UpperTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2);
-		void LowerTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2);
-		void Triangle_Fill(QColor color);
+		void Triangle_Fill(int algType);
+		void Fill(int algType, QColor color);
+
 
 		void clear();
 

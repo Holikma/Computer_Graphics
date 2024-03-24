@@ -39,6 +39,8 @@ private:
 	//Image functions
 	bool openImage(QString filename);
 	bool saveImage(QString filename);
+	void DisableTools();
+	void EnableTools();
 
 private slots:
 	void on_actionOpen_triggered();

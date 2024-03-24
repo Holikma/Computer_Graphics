@@ -11,6 +11,8 @@ ImageViewer::ImageViewer(QWidget* parent) : QMainWindow(parent), ui(new Ui::Imag
 	ui->scrollArea->setWidgetResizable(true);
 	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	DisableTools();
+
 
 	vW->setObjectName("ViewerWidget");
 	vW->installEventFilter(this);
@@ -102,6 +104,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 		ui->toolButtonTranslation->setChecked(true);
 		ui->toolButtonDrawPolygon->setChecked(false);
 		ui->toolButtonDrawPolygon->setEnabled(false);
+		EnableTools();
 		w->update();
 	}
 }
@@ -115,7 +118,9 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
 		setCursor(Qt::ClosedHandCursor);
 		delta = e->pos() - w->getDragStart();
 		w->Translation(delta.x(), delta.y(), globalColor);
-		w->Scan_Line(globalFillColor);
+		if (ui->toolButtonFill->isChecked()) {
+				w->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+		}
 		w->setDragStart(e->pos());
 		w->update();
 	}
@@ -195,6 +200,7 @@ void ImageViewer::on_actionSave_as_triggered(){
 void ImageViewer::on_actionClear_triggered(){
 	vW->clear();
 	vW->clearPoints();
+	DisableTools();
 	ui->toolButtonDrawCircle->setEnabled(true);
 	ui->toolButtonDrawCircle->setChecked(false);
 	ui->toolButtonDrawLine->setEnabled(true);
@@ -202,6 +208,7 @@ void ImageViewer::on_actionClear_triggered(){
 	ui->toolButtonDrawPolygon->setEnabled(true);
 	ui->toolButtonDrawPolygon->setChecked(false);
 	ui->toolButtonTranslation->setChecked(false);
+	ui->comboBoxLineAlg->setEnabled(true);
 	vW->setDragging(false);
 }
 void ImageViewer::on_actionExit_triggered(){
@@ -216,20 +223,31 @@ void ImageViewer::on_pushButtonSetColor_clicked(){
 	}
 }
 void ImageViewer::on_toolButtonRotation_clicked() {
-	vW->Rotation(ui->spinBoxRot->value(), globalColor);
-	vW->Scan_Line(globalFillColor);
+	vW->Rotation(ui->spinBoxRot->value(), globalColor);	
+	if (ui->toolButtonFill->isChecked()) {
+		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+	}
 	vW->update();
 }
 void ImageViewer::on_toolButtonScale_clicked() {
 	vW->Scale(ui->doubleSpinBoxScaleX->value(), ui->doubleSpinBoxScaleY->value(), globalColor);
+	if (ui->toolButtonFill->isChecked()) {
+		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+	}
 	vW->update();
 }
 void ImageViewer::on_toolButtonShear_clicked() {
 	vW->Shear(ui->doubleSpinBoxShearX->value(),  globalColor);
+	if (ui->toolButtonFill->isChecked()) {
+		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+	}
 	vW->update();
 }
 void ImageViewer::on_toolButtonFlip_clicked() {
 	vW->Flip(globalColor);
+	if (ui->toolButtonFill->isChecked()) {
+		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+	}
 	vW->update();
 }
 void ImageViewer::on_toolButtonDrawLine_clicked() {
@@ -277,14 +295,37 @@ void ImageViewer::on_pushButtonSetFillColor_clicked() {
 	}
 }
 void ImageViewer::on_toolButtonTranslation_clicked() {
-	if (ui->toolButtonTranslation->isChecked()) {
-		vW->setDragging(true);
+	if (ui->toolButtonTranslation->isChecked()) {		
+		vW->setDragging(true);	
 	}
 	else {
 		vW->setDragging(false);
 	}
 }
 void ImageViewer::on_toolButtonFill_clicked() {
-	vW->Scan_Line(globalFillColor);
+	if (ui->toolButtonFill->isChecked()) {
+		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+	}
+	else {
+		vW->Render(vW->getPoints(), globalColor);
+	}
 	vW->update();
+}
+void ImageViewer::DisableTools() {
+	ui->toolButtonTranslation->setEnabled(false);
+	ui->toolButtonFill->setEnabled(false);
+	ui->toolButtonFlip->setEnabled(false);
+	ui->toolButtonRotation->setEnabled(false);
+	ui->toolButtonScale->setEnabled(false);
+	ui->toolButtonShear->setEnabled(false);
+	ui->FillAlgorithm->setEnabled(false);
+}
+void ImageViewer::EnableTools() {
+	ui->toolButtonTranslation->setEnabled(true);
+	ui->toolButtonFill->setEnabled(true);
+	ui->toolButtonFlip->setEnabled(true);
+	ui->toolButtonRotation->setEnabled(true);
+	ui->toolButtonScale->setEnabled(true);
+	ui->toolButtonShear->setEnabled(true);
+	ui->FillAlgorithm->setEnabled(true);
 }
