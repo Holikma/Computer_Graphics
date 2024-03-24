@@ -115,6 +115,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
 		setCursor(Qt::ClosedHandCursor);
 		delta = e->pos() - w->getDragStart();
 		w->Translation(delta.x(), delta.y(), globalColor);
+		w->Scan_Line(globalFillColor);
 		w->setDragStart(e->pos());
 		w->update();
 	}
@@ -216,6 +217,7 @@ void ImageViewer::on_pushButtonSetColor_clicked(){
 }
 void ImageViewer::on_toolButtonRotation_clicked() {
 	vW->Rotation(ui->spinBoxRot->value(), globalColor);
+	vW->Scan_Line(globalFillColor);
 	vW->update();
 }
 void ImageViewer::on_toolButtonScale_clicked() {
@@ -281,4 +283,8 @@ void ImageViewer::on_toolButtonTranslation_clicked() {
 	else {
 		vW->setDragging(false);
 	}
+}
+void ImageViewer::on_toolButtonFill_clicked() {
+	vW->Scan_Line(globalFillColor);
+	vW->update();
 }

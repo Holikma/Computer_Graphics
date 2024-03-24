@@ -57,4 +57,5 @@ private slots:
 	void on_pushButtonSetFillColor_clicked();
 	void on_toolButtonDrawPolygon_clicked();
 	void on_toolButtonTranslation_clicked();
+	void on_toolButtonFill_clicked();
 };

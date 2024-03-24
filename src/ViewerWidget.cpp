@@ -271,7 +271,6 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 	update();
 
 }
-
 void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType) {
 	painter->setPen(QPen(color));
 	// DDA algoritm
@@ -299,9 +298,7 @@ void ViewerWidget::Render(QVector<QPoint> list, QColor color) {
 		}
 		else {
 			if (list.size() == 2) {
-				 
 					Cyrus_Beck(color);
-				
 			}
 			else if (list.size() > 2) {
 				if (isInside(list[i].x(), list[i].y()) || isInside(list[i + 1].x(), list[i + 1].y())) {
@@ -371,101 +368,121 @@ void ViewerWidget::Flip(QColor color) {
 	}
 	Render(points, color);
 }
-
 bool ViewerWidget::Comp_points(QPoint p1, QPoint p2) {
 	if (p1.y() != p2.y())
-		return p1.y() < p2.y(); 
+		return p1.y() > p2.y(); 
 	else
-		return p1.x() < p2.x(); 
+		return p1.x() > p2.x(); 
 }
-
 void ViewerWidget::Scan_Line(QColor color) {
 
 	struct Edge {
 		QPoint start;
 		QPoint end;
 		double m;
+		int delta_y;
+		double x;
+		double w;
 	};
-
 	QVector<QPoint> polygon = points;
 
-	std::sort(polygon.begin(), polygon.end(), [this](QPoint p1, QPoint p2) {return Comp_points(p1, p2);});
+	if (polygon.size() < 3) return;
+
 	QVector<Edge> edges;
 
-	// Calculate edges from the sorted polygon points
-	for (int i = 0; i < polygon.size(); ++i) {
-		int next = (i + 1) % polygon.size(); // Get the next point index
-
-		// Skip horizontal edges
+	for (int i = 0; i < polygon.size(); i++) {
+		int next = (i + 1) % polygon.size();
 		if (polygon[i].y() == polygon[next].y())
 			continue;
-
-		// Ensure start.y < end.y
 		QPoint start = polygon[i].y() < polygon[next].y() ? polygon[i] : polygon[next];
 		QPoint end = polygon[i].y() < polygon[next].y() ? polygon[next] : polygon[i];
 
-		double m = static_cast<double>(end.x() - start.x()) / (end.y() - start.y()); // Calculate slope
+		end.setY(end.y() - 1);
 
-		edges.push_back({ start, end, m });
+		double dx = (end.x() - start.x());
+		if (dx == 0) dx = 1/DBL_MAX;
+
+		double m = (double)(end.y() - start.y()) / dx;
+		Edge edge = { start, end, m};
+		edges.push_back(edge);
 	}
-
-	// Sort the edges based on their y-coordinate
+	
 	std::sort(edges.begin(), edges.end(), [](const Edge& e1, const Edge& e2) {
 		return e1.start.y() < e2.start.y();
-		});
+	});
 
-	// Initialize ymin and ymax
-	int ymin = edges.empty() ? 0 : edges.front().start.y();
-	int ymax = edges.empty() ? 0 : edges.back().start.y();
 
-	// Create an edge table
-	QVector<QVector<Edge>> edgeTable(ymax - ymin + 1);
+	int ymin = edges.front().start.y();
+	int ymax = edges.front().end.y();
 
-	// Populate the edge table
-	for (const auto& edge : edges) {
-		int y = edge.start.y();
-		edgeTable[y - ymin].push_back(edge);
+	for (int i = 1; i < edges.size(); i++) {
+		if (edges[i].start.y() < ymin)
+			ymin = edges[i].start.y();
+		if (edges[i].end.y() > ymax)
+			ymax = edges[i].end.y();
 	}
 
-	// Create a list of active edges
-	QVector<Edge> activeEdges;
+	QVector<QVector<Edge>> TH(ymax - ymin + 1);
 
-	// Start scanline algorithm
-	for (int y = ymin; y <= ymax; ++y) {
-		// Move edges from edge table to active edges
-		for (const auto& edge : edgeTable[y - ymin]) {
-			activeEdges.push_back(edge);
+	if (TH.size() < 2) return;
+
+	for (int i = 0; i < edges.size(); i++) {
+		int delta_y = edges[i].end.y() - edges[i].start.y();
+		double x = edges[i].start.x();
+		double w = 0;
+		if (edges[i].m == 0) {
+			w = 0;
+		}
+		else {
+			w = (double)1.0/edges[i].m;
+		}
+		edges[i].delta_y = delta_y;
+		edges[i].x = x;
+		edges[i].w = w;
+		
+		TH[(edges[i].start.y() - ymin)].push_back(edges[i]);
+	}
+
+	QVector<Edge> ZAH;
+	int y = ymin;
+
+	for (int i = 0; i < ymax - ymin; i++) {
+
+		if (!TH[i].empty()) {
+			for (const Edge& edge : TH[i]) {
+				ZAH.push_back(edge);
+			}
 		}
 
-		// Sort active edges by x-coordinate
-		std::sort(activeEdges.begin(), activeEdges.end(), [](const Edge& e1, const Edge& e2) {
-			return e1.start.x() < e2.start.x();
+		std::sort(ZAH.begin(), ZAH.end(), [](const Edge& e1, const Edge& e2) {
+			return e1.x < e2.x;
 			});
 
-		// Process pairs of active edges
-		for (int j = 0; j < activeEdges.size()-1; j++) {
-			int x1 = activeEdges[j].start.x();
-			int x2 = activeEdges[j + 1].start.x();
-			// Fill pixels between x1 and x2 at current y
-			for (int x = x1; x <= x2; ++x) {
-				setPixel(x, y, color);
-			}
-			// Update edge values
-			activeEdges[j].start.setY(activeEdges[j].start.y() + 1);
-			activeEdges[j].start.setX(activeEdges[j].start.x() + activeEdges[j].m);
+		for (int j = 0; j < ZAH.size(); j += 2) {
 
-			activeEdges[j + 1].start.setY(activeEdges[j + 1].start.y() + 1);
-			activeEdges[j + 1].start.setX(activeEdges[j + 1].start.x() + activeEdges[j + 1].m);
+			if (j + 1 < ZAH.size() && ZAH[j].x != ZAH[j + 1].x) {
+
+				for (int k = round(ZAH[j].x); k <= round(ZAH[j + 1].x); k++) {
+					if (k > 0 && y > 0 && k < img->width() && y < img->height()) {
+						setPixel(k, y, color);
+					}
+				}
+			}
+		}
+		for (int j = 0; j < ZAH.size(); j++) {
+			if (ZAH[j].delta_y == 0) {
+				ZAH.erase(ZAH.begin() + j);
+				j--;
+			}
 		}
 
-		// Remove edges with Δy = 0
-		activeEdges.erase(std::remove_if(activeEdges.begin(), activeEdges.end(), [y](const Edge& edge) {
-			return edge.end.y() <= y;
-			}), activeEdges.end());
+		for (int j = 0; j < ZAH.size(); j++) {
+			ZAH[j].delta_y--;
+			ZAH[j].x += ZAH[j].w;
+		}
+		y++;
 	}
 }
-
-
 //Clear
 void ViewerWidget::clear() {
 	img->fill(Qt::white);
