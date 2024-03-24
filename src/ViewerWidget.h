@@ -66,7 +66,7 @@ class ViewerWidget :public QWidget {
 		void setPoint(int index, int x, int y) { points[index].setX(x); points[index].setY(y); }
 		QPoint getPoint(int index) { return points[index]; }
 		void clearPoints() { points.clear(); }
-
+		void SmallCircleAroundPoint(int x, int y, QColor color){ drawCircle(QPoint(x, y), QPoint(x + 3, y + 3), color); }
 
 		uchar* getData() { return data; }
 		void setDataPtr() { data = img->bits(); }
@@ -97,11 +97,15 @@ class ViewerWidget :public QWidget {
 		void Shear(double shx, QColor color); //Skosenie
 		void Flip(QColor color);
 		void Scan_Line(QColor color);
-		void Triangle_Fill(int algType);
-		void Fill(int algType, QColor color);
-
-
+		void Triangle_Fill(QVector<QPoint> lists, int algType);
+		void Fill(QVector<QPoint> lists, int algType, QColor color);
+		void Barycentric(QPoint A, QPoint B, QPoint C, QPoint P, QColor C0, QColor C1, QColor C2);
 		void clear();
+
+		void DrawCurves(QVector<QPoint> list, QColor color, int algType);
+		void Hermit(QColor color);
+		void Bezier(QColor color);
+
 
 	public slots:
 		void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

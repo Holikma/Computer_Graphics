@@ -186,20 +186,30 @@ void ViewerWidget::BresenhamCircle(QPoint start, QPoint end, QColor color) {
 	}
 }
 void ViewerWidget::Cyrus_Beck(QColor color) {
+	// Define vector D as the vector from the first point to the second point
 	QPoint D = points[1] - points[0];
+	
+	// Initialize tl (t lower bound) to 0 and tu (t upper bound) to 1
 	double tl = 0;
 	double tu = 1;
+	
+	// Define the boundary of the clipping region (in this case, a rectangle)
 	QVector<QPoint> plane = { QPoint(0, 0), QPoint(0, img->height()), QPoint(img->width(), img->height()), QPoint(img->width(), 0) };
-
+	
+	// Iterate over each edge of the clipping rectangle
 	for (int i = 0; i < 4; i++) {
 		QPoint E0 = plane[i];
 		QPoint E1 = plane[(i + 1) % 4];
+
+		// Define the vector representing the current edge (E1 - E0)
 		QPoint E(E1 - E0);
 
+		// Calculate the inside normal vector N to the current edge
 		QPoint N(E.y(), -E.x());
 		double dotDN = dotProduct(D, N);
 		double dotWN = dotProduct((points[0] - E0), N);
 
+		// If the dot product of D and N is not 0 (i.e., the line is not parallel to the edge)
 		if (dotDN != 0) {
 			double t = -dotWN / dotDN;
 			if (dotDN > 0 && t <= 1) {
@@ -267,7 +277,6 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 	if (polygon.size() > 1) {
 		drawLine(polygon[polygon.size() - 1], polygon[0], color, 0);
 	}
-
 	update();
 
 }
@@ -359,17 +368,28 @@ void ViewerWidget::Shear(double shx, QColor color) {
 	Render(points, color);
 }
 void ViewerWidget::Flip(QColor color) {
-	//flip based on first line
-	QPoint start = points[0];
-	QPoint end = points[1];
-	QPoint center = QPoint((start.x() + end.x()) / 2, (start.y() + end.y()) / 2);
-	for (int i = 2; i < points.size(); i++) {
-		int x = center.x() - (points[i].x() - center.x());
-		int y = center.y() - (points[i].y() - center.y());
-		setPoint(i, x, y);
+	if (points.size() == 0 || points.size() == 1) {
+		return;
+	}
+	if (points.size() == 2) {
+		int new_x = points[0].x() - 2 * (points[1].x() - points[0].x());
+		points[1].setX(new_x);
+	}
+	else {
+		double A = points[1].y() - points[0].y();
+		double B = points[0].x() - points[1].x();
+		double C = -A * points[0].x() - B * points[0].y();
+		for (int i = 2; i < points.size(); i++) {
+			double d = A * points[i].x() + B * points[i].y() + C;
+			double new_x = points[i].x() - 2 * A * d / (A * A + B * B);
+			double new_y = points[i].y() - 2 * B * d / (A * A + B * B);
+			setPoint(i, new_x, new_y);
+			
+		}
 	}
 	Render(points, color);
 }
+
 bool ViewerWidget::Comp_points(QPoint p1, QPoint p2) {
 	if (p1.y() != p2.y())
 		return p1.y() < p2.y();
@@ -494,8 +514,8 @@ void ViewerWidget::Scan_Line(QColor color) {
 		y++;
 	}
 }
-void ViewerWidget::Triangle_Fill(int algType){
-	QVector<QPoint> sorted = points;
+void ViewerWidget::Triangle_Fill(QVector<QPoint> lists, int algType) {
+	QVector<QPoint> sorted = lists;
 
 	std::sort(sorted.begin(), sorted.end(), [](const QPoint& p1, const QPoint& p2) {
 		return p1.y() < p2.y() || (p1.y() == p2.y() && p1.x() < p2.x());
@@ -516,6 +536,37 @@ void ViewerWidget::Triangle_Fill(int algType){
 
 				for (int x = x1; x <= x2; x++) {
 					QPoint K(x, y);
+					if (algType == 0) {
+						double d0 = distance(T0, K);
+						double d1 = distance(T1, K);
+						double d2 = distance(T2, K);
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							if (d0 < d1 && d0 < d2) {
+								setPixel(x, y, C0);
+							}
+							else if (d1 < d0 && d1 < d2) {
+								setPixel(x, y, C1);
+							}
+							else {
+								setPixel(x, y, C2);
+							}
+						}
+					}
+					else {
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							Barycentric(T0, T1, T2, K, C0, C1, C2); 
+						}
+					}
+				}
+			}
+	}
+	else if (T1.y() == T2.y()) { //upper triangle
+		for (int y = T0.y(); y <= T1.y(); y++) {
+			int x1 = ((y - T0.y()) * (T1.x() - T0.x()) / (T1.y() - T0.y()) + T0.x());
+			int x2 = ((y - T0.y()) * (T2.x() - T0.x()) / (T2.y() - T0.y()) + T0.x());
+			for (int x = x1; x <= x2; x++) {
+				QPoint K(x, y);
+				if (algType == 0) {
 					double d0 = distance(T0, K);
 					double d1 = distance(T1, K);
 					double d2 = distance(T2, K);
@@ -531,26 +582,9 @@ void ViewerWidget::Triangle_Fill(int algType){
 						}
 					}
 				}
-			}
-	}
-	else if (T1.y() == T2.y()) { //upper triangle
-		for (int y = T0.y(); y <= T1.y(); y++) {
-			int x1 = ((y - T0.y()) * (T1.x() - T0.x()) / (T1.y() - T0.y()) + T0.x());
-			int x2 = ((y - T0.y()) * (T2.x() - T0.x()) / (T2.y() - T0.y()) + T0.x());
-			for (int x = x1; x <= x2; x++) {
-				QPoint K(x, y);
-				double d0 = distance(T0, K);
-				double d1 = distance(T1, K);
-				double d2 = distance(T2, K);
-				if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
-					if (d0 < d1 && d0 < d2) {
-						setPixel(x, y, C0);
-					}
-					else if (d1 < d0 && d1 < d2) {
-						setPixel(x, y, C1);
-					}
-					else {
-						setPixel(x, y, C2);
+				else {
+					if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+						Barycentric(T0, T1, T2, K, C0, C1, C2);
 					}
 				}
 			}
@@ -565,18 +599,25 @@ void ViewerWidget::Triangle_Fill(int algType){
 				int x2 = ((y - T0.y()) * (P.x() - T0.x()) / (P.y() - T0.y()) + T0.x());
 				for (int x = x1; x <= x2; x++) {
 					QPoint K(x, y);
-					double d0 = distance(T0, K);
-					double d1 = distance(T1, K);
-					double d2 = distance(T2, K);
-					if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
-						if (d0 < d1 && d0 < d2) {
-							setPixel(x, y, C0);
+					if (algType == 0) {
+						double d0 = distance(T0, K);
+						double d1 = distance(T1, K);
+						double d2 = distance(T2, K);
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							if (d0 < d1 && d0 < d2) {
+								setPixel(x, y, C0);
+							}
+							else if (d1 < d0 && d1 < d2) {
+								setPixel(x, y, C1);
+							}
+							else {
+								setPixel(x, y, C2);
+							}
 						}
-						else if (d1 < d0 && d1 < d2) {
-							setPixel(x, y, C1);
-						}
-						else {
-							setPixel(x, y, C2);
+					}
+					else {
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							Barycentric(T0, T1, T2, K, C0, C1, C2);
 						}
 					}
 				}
@@ -587,18 +628,25 @@ void ViewerWidget::Triangle_Fill(int algType){
 
 				for (int x = x1; x <= x2; x++) {
 					QPoint K(x, y);
-					double d0 = distance(T0, K);
-					double d1 = distance(T1, K);
-					double d2 = distance(T2, K);
-					if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
-						if (d0 < d1 && d0 < d2) {
-							setPixel(x, y, C0);
+					if (algType == 0) {
+						double d0 = distance(T0, K);
+						double d1 = distance(T1, K);
+						double d2 = distance(T2, K);
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							if (d0 < d1 && d0 < d2) {
+								setPixel(x, y, C0);
+							}
+							else if (d1 < d0 && d1 < d2) {
+								setPixel(x, y, C1);
+							}
+							else {
+								setPixel(x, y, C2);
+							}
 						}
-						else if (d1 < d0 && d1 < d2) {
-							setPixel(x, y, C1);
-						}
-						else {
-							setPixel(x, y, C2);
+					}
+					else {
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							Barycentric(T0, T1, T2, K, C0, C1, C2);
 						}
 					}
 				}
@@ -611,18 +659,25 @@ void ViewerWidget::Triangle_Fill(int algType){
 
 				for (int x = x1; x <= x2; x++) {
 					QPoint K(x, y);
-					double d0 = distance(T0, K);
-					double d1 = distance(T1, K);
-					double d2 = distance(T2, K);
-					if (isInside(x, y) && isInsideTriangle(T0, T1, T2,K)) {
-						if (d0 < d1 && d0 < d2) {
-							setPixel(x, y, C0);
+					if (algType == 0) {
+						double d0 = distance(T0, K);
+						double d1 = distance(T1, K);
+						double d2 = distance(T2, K);
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							if (d0 < d1 && d0 < d2) {
+								setPixel(x, y, C0);
+							}
+							else if (d1 < d0 && d1 < d2) {
+								setPixel(x, y, C1);
+							}
+							else {
+								setPixel(x, y, C2);
+							}
 						}
-						else if (d1 < d0 && d1 < d2) {
-							setPixel(x, y, C1);
-						}
-						else {
-							setPixel(x, y, C2);
+					}
+					else {
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							Barycentric(T0, T1, T2, K, C0, C1, C2);
 						}
 					}
 				}
@@ -632,18 +687,25 @@ void ViewerWidget::Triangle_Fill(int algType){
 				int x2 = ((y - T1.y()) * (T2.x() - T1.x()) / (T2.y() - T1.y()) + T1.x());
 				for (int x = x1; x <= x2; x++) {
 					QPoint K(x, y);
-					double d0 = distance(T0, K);
-					double d1 = distance(T1, K);
-					double d2 = distance(T2, K);
-					if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
-						if (d0 < d1 && d0 < d2) {
-							setPixel(x, y, C0);
+					if (algType == 0) {
+						double d0 = distance(T0, K);
+						double d1 = distance(T1, K);
+						double d2 = distance(T2, K);
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							if (d0 < d1 && d0 < d2) {
+								setPixel(x, y, C0);
+							}
+							else if (d1 < d0 && d1 < d2) {
+								setPixel(x, y, C1);
+							}
+							else {
+								setPixel(x, y, C2);
+							}
 						}
-						else if (d1 < d0 && d1 < d2) {
-							setPixel(x, y, C1);
-						}
-						else {
-							setPixel(x, y, C2);
+					}
+					else {
+						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+							Barycentric(T0, T1, T2, K, C0, C1, C2);
 						}
 					}
 				}
@@ -651,13 +713,34 @@ void ViewerWidget::Triangle_Fill(int algType){
 		}
 	}
 }
-void ViewerWidget::Fill(int algType, QColor color) {
-	if (points.size() == 3) {
-		Triangle_Fill(algType);
+void ViewerWidget::Fill(QVector<QPoint> lists, int algType, QColor color) {
+	if (lists.size() == 3) {
+		Triangle_Fill(lists, algType);
 	}
-	else if (points.size() > 3) {
+	else if (lists.size() > 3) {
 		Scan_Line(color);
 	}
+}
+void ViewerWidget::Barycentric(QPoint A, QPoint B, QPoint C, QPoint P, QColor C0, QColor C1, QColor C2) {
+	// Area ABC
+	double A_tri = qAbs((A.x() * (B.y() - C.y()) + B.x() * (C.y() - A.y()) + C.x() * (A.y() - B.y())) / 2.0);
+	// Area PBC
+	double A0_tri = qAbs((P.x() * (B.y() - C.y()) + B.x() * (C.y() - P.y()) + C.x() * (P.y() - B.y())) / 2.0);
+	// Area APC
+	double A1_tri = qAbs((A.x() * (P.y() - C.y()) + P.x() * (C.y() - A.y()) + C.x() * (A.y() - P.y())) / 2.0);
+	// Area ABP
+	double A2_tri = qAbs((A.x() * (B.y() - P.y()) + B.x() * (P.y() - A.y()) + P.x() * (A.y() - B.y())) / 2.0);
+	// Calculate barycentric coordinates
+	double lambda0 = A0_tri / A_tri;
+	double lambda1 = A1_tri / A_tri;
+	double lambda2 = A2_tri / A_tri;
+
+	// Interpolate color
+	double red = lambda0 * C0.redF() + lambda1 * C1.redF() + lambda2 * C2.redF();
+	double green = lambda0 * C0.greenF() + lambda1 * C1.greenF() + lambda2 * C2.greenF();
+	double blue = lambda0 * C0.blueF() + lambda1 * C1.blueF() + lambda2 * C2.blueF();
+	setPixel(P.x(), P.y(), QColor::fromRgbF(red, green, blue));
+
 }
 //Clear
 void ViewerWidget::clear() {
@@ -669,4 +752,56 @@ void ViewerWidget::paintEvent(QPaintEvent* event) {
 	QPainter painter(this);
 	QRect area = event->rect();
 	painter.drawImage(area, *img, area);
+}
+void ViewerWidget::Hermit(QColor color) {
+	if (points.size() < 1) {
+		return;
+	}
+	else {
+		QVector<QPoint> tangents;
+		for (int i = 0; i < points.size(); i++) {
+			if (i == 0) tangents.push_back((points[i + 1] - points[i]) / 2);
+			else if (i == points.size() - 2) tangents.push_back((points[i] - points[i - 1]) / 2);
+			else tangents.push_back(((points[i + 1] - points[i]) / 2) + ((points[i] - points[i - 1])/2));
+			
+		}
+		for (int i = 0; i < tangents.size(); i++) {
+			drawLine(points[i], points[i] + tangents[i], color, 0);
+		}
+		double delta_t = 0.0001;
+		for (int i = 1; i < points.size(); i++) {
+			QPoint P0 = points[i - 1];
+			QPoint P1 = points[i];
+			QPoint T0 = tangents[i - 1];
+			QPoint T1 = tangents[i];
+			double t = delta_t;
+			while (t < 1) {
+				QPoint Q1 = P0 * (2 * t * t * t - 3 * t * t + 1) + P1 * (-2 * t * t * t + 3 * t * t) +
+					T0 * (t * t * t - 2 * t * t + t) + T1 * (t * t * t - t * t);
+				drawLine(P0, Q1, color, 0);
+				Q1.setX(round(Q1.x()));
+				Q1.setY(round(Q1.y()));
+				t += delta_t;
+				P0 = Q1;
+			}
+			drawLine(P0, P1, color, 0);
+		}
+	}
+	update();
+}
+void ViewerWidget::Bezier(QColor color) {
+	
+}
+void ViewerWidget::DrawCurves(QVector<QPoint> list, QColor color, int algType) {
+	if (list.size() == 0) {
+		return;
+	}
+	if (list.size() == 1) {
+		setPoint(0, list[0].x(), list[0].y());
+	}
+	else {
+		if (algType == 0) {
+			Hermit(color);
+		}
+	}
 }

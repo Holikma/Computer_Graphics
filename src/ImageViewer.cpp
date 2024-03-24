@@ -107,6 +107,15 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event) {
 		EnableTools();
 		w->update();
 	}
+	if (e->button() == Qt::LeftButton && ui->pushButtonCurves->isChecked()) {
+		w->AddPoint(e->pos());
+		w->SmallCircleAroundPoint(e->pos().x(), e->pos().y(), globalColor);
+	}
+	if (e->button() == Qt::RightButton && ui->pushButtonCurves->isChecked()) {
+		w->DrawCurves(w->getPoints(), globalColor, ui->comboBoxCurves->currentIndex());
+		ui->pushButtonCurves->setChecked(false);
+		w->update();
+	}
 }
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event){
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
@@ -119,7 +128,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event) {
 		delta = e->pos() - w->getDragStart();
 		w->Translation(delta.x(), delta.y(), globalColor);
 		if (ui->toolButtonFill->isChecked()) {
-				w->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+				w->Fill(vW->getPoints(), ui->FillAlgorithm->currentIndex(), globalFillColor);
 		}
 		w->setDragStart(e->pos());
 		w->update();
@@ -225,28 +234,28 @@ void ImageViewer::on_pushButtonSetColor_clicked(){
 void ImageViewer::on_toolButtonRotation_clicked() {
 	vW->Rotation(ui->spinBoxRot->value(), globalColor);	
 	if (ui->toolButtonFill->isChecked()) {
-		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+		vW->Fill(vW->getPoints(), ui->FillAlgorithm->currentIndex(), globalFillColor);
 	}
 	vW->update();
 }
 void ImageViewer::on_toolButtonScale_clicked() {
 	vW->Scale(ui->doubleSpinBoxScaleX->value(), ui->doubleSpinBoxScaleY->value(), globalColor);
 	if (ui->toolButtonFill->isChecked()) {
-		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+		vW->Fill(vW->getPoints(), ui->FillAlgorithm->currentIndex(), globalFillColor);
 	}
 	vW->update();
 }
 void ImageViewer::on_toolButtonShear_clicked() {
 	vW->Shear(ui->doubleSpinBoxShearX->value(),  globalColor);
 	if (ui->toolButtonFill->isChecked()) {
-		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+		vW->Fill(vW->getPoints(), ui->FillAlgorithm->currentIndex(), globalFillColor);
 	}
 	vW->update();
 }
 void ImageViewer::on_toolButtonFlip_clicked() {
 	vW->Flip(globalColor);
 	if (ui->toolButtonFill->isChecked()) {
-		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+		vW->Fill(vW->getPoints(), ui->FillAlgorithm->currentIndex(), globalFillColor);
 	}
 	vW->update();
 }
@@ -304,7 +313,7 @@ void ImageViewer::on_toolButtonTranslation_clicked() {
 }
 void ImageViewer::on_toolButtonFill_clicked() {
 	if (ui->toolButtonFill->isChecked()) {
-		vW->Fill(ui->FillAlgorithm->currentIndex(), globalFillColor);
+		vW->Fill(vW->getPoints(), ui->FillAlgorithm->currentIndex(), globalFillColor);
 	}
 	else {
 		vW->Render(vW->getPoints(), globalColor);
@@ -328,4 +337,6 @@ void ImageViewer::EnableTools() {
 	ui->toolButtonScale->setEnabled(true);
 	ui->toolButtonShear->setEnabled(true);
 	ui->FillAlgorithm->setEnabled(true);
+}
+void ImageViewer::on_pushButtonCurves_clicked() {
 }

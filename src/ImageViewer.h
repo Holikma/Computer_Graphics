@@ -60,4 +60,5 @@ private slots:
 	void on_toolButtonDrawPolygon_clicked();
 	void on_toolButtonTranslation_clicked();
 	void on_toolButtonFill_clicked();
+	void on_pushButtonCurves_clicked();
 };
