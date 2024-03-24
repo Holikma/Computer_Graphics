@@ -231,7 +231,7 @@ void ViewerWidget::Cyrus_Beck(QColor color) {
 	}
 }
 void ViewerWidget::Sutherland_Hodgeman(QColor color) {
-	QVector<QPoint> W;
+	QVector<QPoint> W; // Initialize a vector to hold the vertices of the clipped polygon
 	QVector<QPoint> polygon = points;
 	int edges[4] = {0,0,-499,-499};
 
@@ -249,6 +249,7 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 					W.append(Vi);
 				}
 				else {
+					// Calculate the intersection point P between the clipping edge and the line segment formed by S and Vi
 					QPoint P = QPoint(xmin, S.y() + (xmin - S.x()) * (Vi.y() - S.y()) / (double)(Vi.x() - S.x()));
 					W.append(P);
 					W.append(Vi);
@@ -264,6 +265,7 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 		}
 		polygon = W;
 		W.clear();
+		// Rotate the polygon clockwise to handle the next clipping edge
 		for (int k = 0; k < polygon.size(); k++){
 			QPoint swap = polygon[k];
 			polygon[k].setX(swap.y());
@@ -372,7 +374,8 @@ void ViewerWidget::Flip(QColor color) {
 		return;
 	}
 	if (points.size() == 2) {
-		int new_x = points[0].x() - 2 * (points[1].x() - points[0].x());
+		// 2 times, because we need to flip the line
+		int new_x = points[1].x() + 2 *  (points[0].x() - points[1].x());
 		points[1].setX(new_x);
 	}
 	else {
@@ -384,7 +387,6 @@ void ViewerWidget::Flip(QColor color) {
 			double new_x = points[i].x() - 2 * A * d / (A * A + B * B);
 			double new_y = points[i].y() - 2 * B * d / (A * A + B * B);
 			setPoint(i, new_x, new_y);
-			
 		}
 	}
 	Render(points, color);
@@ -423,26 +425,30 @@ void ViewerWidget::Scan_Line(QColor color) {
 	QVector<QPoint> polygon = points;
 	QVector<Edge> edges;
 
+	// Loop through each vertex of the polygon to generate edges
 	for (int i = 0; i < polygon.size(); i++) {
 		int next = (i + 1) % polygon.size();
+		// Skip horizontal edges
 		if (polygon[i].y() == polygon[next].y())
 			continue;
 		QPoint start = polygon[i].y() < polygon[next].y() ? polygon[i] : polygon[next];
 		QPoint end = polygon[i].y() < polygon[next].y() ? polygon[next] : polygon[i];
-
+		// Adjust the end point slightly to ensure correct edge classification
 		end.setY(end.y() - 1);
 		double dx = (end.x() - start.x());
 		if (dx == 0) dx = 1/DBL_MAX;
 
 		double m = (double)(end.y() - start.y()) / dx;
+		// Create an edge struct and add it to the vector
 		Edge edge = { start, end, m};
 		edges.push_back(edge);
 	}
-	
+	// Sort edges based on the starting y-coordinate
 	std::sort(edges.begin(), edges.end(), [](const Edge& e1, const Edge& e2) {
 		return e1.start.y() < e2.start.y();
 	});
 
+	// Find the minimum and maximum y-coordinates of the bounding box
 	int ymin = edges.front().start.y();
 	int ymax = edges.front().end.y();
 
@@ -475,11 +481,13 @@ void ViewerWidget::Scan_Line(QColor color) {
 	}
 
 	QVector<Edge> ZAH;
+	// Scan convert each scanline
 	int y = ymin;
 
 	for (int i = 0; i < ymax - ymin; i++) {
-
+		// Add active edges from TH to ZAH
 		if (!TH[i].empty()) {
+
 			for (const Edge& edge : TH[i]) {
 				ZAH.push_back(edge);
 			}
@@ -489,6 +497,7 @@ void ViewerWidget::Scan_Line(QColor color) {
 			return e1.x < e2.x;
 			});
 
+		// Fill scanline between pairs of edges in ZAH
 		for (int j = 0; j < ZAH.size(); j += 2) {
 
 			if (j + 1 < ZAH.size() && ZAH[j].x != ZAH[j + 1].x) {
@@ -500,6 +509,7 @@ void ViewerWidget::Scan_Line(QColor color) {
 				}
 			}
 		}
+		// Update x-coordinates and decrement delta_y for remaining edges in ZAH
 		for (int j = 0; j < ZAH.size(); j++) {
 			if (ZAH[j].delta_y == 0) {
 				ZAH.erase(ZAH.begin() + j);
@@ -530,16 +540,19 @@ void ViewerWidget::Triangle_Fill(QVector<QPoint> lists, int algType) {
 	QColor C2 = Qt::green;
 
 	if (T0.y() == T1.y()) { //lower triangle
+		// Iterate over each scanline between T1.y() and T2.y()
 		for (int y = T1.y(); y <= T2.y(); y++) {
+			// Calculate the x-coordinates of the line segments between the edges
 				int x1 = ((y - T0.y()) * (T2.x() - T0.x()) / (T2.y() - T0.y()) + T0.x());
 				int x2 = ((y - T1.y()) * (T2.x() - T1.x()) / (T2.y() - T1.y()) + T1.x());
-
+				// Iterate over each pixel in the scanline
 				for (int x = x1; x <= x2; x++) {
 					QPoint K(x, y);
 					if (algType == 0) {
 						double d0 = distance(T0, K);
 						double d1 = distance(T1, K);
 						double d2 = distance(T2, K);
+						// Set pixel color based on the closest vertex
 						if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
 							if (d0 < d1 && d0 < d2) {
 								setPixel(x, y, C0);
@@ -742,7 +755,6 @@ void ViewerWidget::Barycentric(QPoint A, QPoint B, QPoint C, QPoint P, QColor C0
 	setPixel(P.x(), P.y(), QColor::fromRgbF(red, green, blue));
 
 }
-//Clear
 void ViewerWidget::clear() {
 	img->fill(Qt::white);
 	update();
@@ -763,7 +775,6 @@ void ViewerWidget::Hermit(QColor color) {
 			if (i == 0) tangents.push_back((points[i + 1] - points[i]) / 2);
 			else if (i == points.size() - 2) tangents.push_back((points[i] - points[i - 1]) / 2);
 			else tangents.push_back(((points[i + 1] - points[i]) / 2) + ((points[i] - points[i - 1])/2));
-			
 		}
 		for (int i = 0; i < tangents.size(); i++) {
 			drawLine(points[i], points[i] + tangents[i], color, 0);
