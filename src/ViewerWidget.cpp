@@ -370,24 +370,40 @@ void ViewerWidget::Flip(QColor color) {
 }
 bool ViewerWidget::Comp_points(QPoint p1, QPoint p2) {
 	if (p1.y() != p2.y())
-		return p1.y() > p2.y(); 
+		return p1.y() < p2.y();
 	else
-		return p1.x() > p2.x(); 
+		return p1.x() < p2.x(); 
 }
-void ViewerWidget::Scan_Line(QColor color) {
+bool ViewerWidget::isInsideTriangle(QPoint A, QPoint B, QPoint C, QPoint P){
+	int as_x = P.x() - A.x();
+	int as_y = P.y() - A.y();
 
-	struct Edge {
+	// Určíme, na ktorej strane priamky AB sa bod P nachádza
+	bool s_ab = (B.x() - A.x()) * as_y - (B.y() - A.y()) * as_x > 0;
+
+	// Ak sa bod P nachádza na opačnej strane priamky AC, nie je vnútri trojuholníka
+	if ((C.x() - A.x()) * as_y - (C.y() - A.y()) * as_x > 0 == s_ab) return false;
+
+	// Ak sa bod P nachádza na opačnej strane priamky BC, nie je vnútri trojuholníka
+	if ((C.x() - B.x()) * (P.y() - B.y()) - (C.y() - B.y()) * (P.x() - B.x()) > 0 != s_ab) return false;
+
+	return true;
+}
+struct Edge {
 		QPoint start;
 		QPoint end;
 		double m;
 		int delta_y;
 		double x;
 		double w;
-	};
+};
+void ViewerWidget::Scan_Line(QColor color) {
 	QVector<QPoint> polygon = points;
 
-	if (polygon.size() < 3) return;
-
+	if (polygon.size() <= 3) {
+		Triangle_Fill(color);
+		return;
+	}
 	QVector<Edge> edges;
 
 	for (int i = 0; i < polygon.size(); i++) {
@@ -398,7 +414,6 @@ void ViewerWidget::Scan_Line(QColor color) {
 		QPoint end = polygon[i].y() < polygon[next].y() ? polygon[next] : polygon[i];
 
 		end.setY(end.y() - 1);
-
 		double dx = (end.x() - start.x());
 		if (dx == 0) dx = 1/DBL_MAX;
 
@@ -410,7 +425,6 @@ void ViewerWidget::Scan_Line(QColor color) {
 	std::sort(edges.begin(), edges.end(), [](const Edge& e1, const Edge& e2) {
 		return e1.start.y() < e2.start.y();
 	});
-
 
 	int ymin = edges.front().start.y();
 	int ymax = edges.front().end.y();
@@ -463,7 +477,7 @@ void ViewerWidget::Scan_Line(QColor color) {
 			if (j + 1 < ZAH.size() && ZAH[j].x != ZAH[j + 1].x) {
 
 				for (int k = round(ZAH[j].x); k <= round(ZAH[j + 1].x); k++) {
-					if (k > 0 && y > 0 && k < img->width() && y < img->height()) {
+					if (isInside(k,y)) {
 						setPixel(k, y, color);
 					}
 				}
@@ -481,6 +495,223 @@ void ViewerWidget::Scan_Line(QColor color) {
 			ZAH[j].x += ZAH[j].w;
 		}
 		y++;
+	}
+}
+void ViewerWidget::UpperTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2) {
+	double slope1 = (double)(C.x() - A.x()) / (C.y() - A.y());
+	double slope2 = (double)(C.x() - B.x()) / (C.y() - B.y());
+
+	for (int y = C.y(); y < A.y(); y--) {
+		int x1 = C.x() - (C.y() - y) * slope1;
+		int x2 = C.x() - (C.y() - y) * slope2;
+		for (int x = x1; x < x2; x++) {
+			QPoint P(x, y);
+			if (isInside(x, y) && isInsideTriangle(A, B, C, P)) {
+				double d0 = distance(A, P);
+				double d1 = distance(B, P);
+				double d2 = distance(C, P);
+				if (d0 < d1 && d0 < d2) {
+					setPixel(x, y, C0);
+				}
+				else if (d1 < d0 && d1 < d2) {
+					setPixel(x, y, C1);
+				}
+				else if (d2 < d0 && d2 < d1) {
+					setPixel(x, y, C2);
+				}
+			}
+		}
+	}
+}
+void ViewerWidget::LowerTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2) {
+	double slope1 = (double)(A.x() - B.x()) / (A.y() - B.y());
+	double slope2 = (double)(A.x() - C.x()) / (A.y() - C.y());
+
+	for (int y = A.y(); y < C.y(); y++) {
+		int x1 = A.x() - (A.y() - y) * slope1;
+		int x2 = A.x() - (A.y() - y) * slope2;
+		for (int x = x1; x < x2; x++) {
+			QPoint P(x, y);
+			if (isInside(x, y) && isInsideTriangle(A, B, C, P)) {
+				double d0 = distance(A, P);
+				double d1 = distance(B, P);
+				double d2 = distance(C, P);
+				if (d0 < d1 && d0 < d2) {
+					setPixel(x, y, C0);
+				}
+				else if (d1 < d0 && d1 < d2) {
+					setPixel(x, y, C1);
+				}
+				else if (d2 < d0 && d2 < d1) {
+					setPixel(x, y, C2);
+				}
+			}
+		}
+	}
+
+}
+void ViewerWidget::Triangle_Fill(QColor color){
+	QVector<QPoint> sorted = points;
+
+	std::sort(sorted.begin(), sorted.end(), [](const QPoint& p1, const QPoint& p2) {
+		return p1.y() < p2.y() || (p1.y() == p2.y() && p1.x() < p2.x());
+		});
+
+	QPoint T0 = sorted[0];
+	QPoint T1 = sorted[1];
+	QPoint T2 = sorted[2];
+
+	QColor C0 = Qt::blue;
+	QColor C1 = Qt::red;
+	QColor C2 = Qt::green;
+
+	if (T0.y() == T1.y()) {
+		qDebug() << "Lower";
+		double m1 = (double)(T0.x() - T1.x()) / (T0.y() - T1.y());
+		double m2 = (double)(T0.x() - T2.x()) / (T0.y() - T2.y());
+		for (int y = T0.y(); y < T2.y(); y++) {
+			int x1 = T0.x() - (T0.y() - y) * m1;
+			int x2 = T0.x() - (T0.y() - y) * m2;
+			for (int x = x1; x < x2; x++) {
+				QPoint P(x, y);
+				if (isInside(x, y) && isInsideTriangle(T0, T1, T2, P)) {
+					double d0 = distance(T0, P);
+					double d1 = distance(T1, P);
+					double d2 = distance(T2, P);
+					if (d0 < d1 && d0 < d2) {
+						setPixel(x, y, C0);
+					}
+					else if (d1 < d0 && d1 < d2) {
+						setPixel(x, y, C1);
+					}
+					else if (d2 < d0 && d2 < d1) {
+						setPixel(x, y, C2);
+					}
+				}
+			}
+		}
+	}
+	else if (T1.y() == T2.y()) {
+		qDebug() << "Upper";
+		double m1 = (double)(T2.x() - T0.x()) / (T2.y() - T0.y());
+		double m2 = (double)(T2.x() - T1.x()) / (T2.y() - T1.y());
+
+		for (int y = T2.y(); y < T0.y(); y--) {
+			int x1 = T2.x() - (T2.y() - y) * m1;
+			int x2 = T2.x() - (T2.y() - y) * m2;
+			for (int x = x1; x < x2; x++) {
+				QPoint P(x, y);
+				if (isInside(x, y) && isInsideTriangle(T0, T1, T2, P)) {
+					double d0 = distance(T0, P);
+					double d1 = distance(T1, P);
+					double d2 = distance(T2, P);
+					if (d0 < d1 && d0 < d2) {
+						setPixel(x, y, C0);
+					}
+					else if (d1 < d0 && d1 < d2) {
+						setPixel(x, y, C1);
+					}
+					else if (d2 < d0 && d2 < d1) {
+						setPixel(x, y, C2);
+					}
+				}
+			}
+		}
+	}
+	else {
+		qDebug() << "Split";
+		double m = (double)(T2.y() - T0.y()) / (T2.x() - T0.x());
+		QPoint P((T1.y() - T0.y()) / m + T0.x(), T1.y());
+		if (T1.x() < P.x()) {
+			for (int y = T0.y(); y <= T1.y(); y++) {
+				int x1 = ((y - T0.y()) * (T1.x() - T0.x()) / (T1.y() - T0.y()) + T0.x());
+				int x2 = ((y - T0.y()) * (P.x() - T0.x()) / (P.y() - T0.y()) + T0.x());
+				for (int x = x1; x <= x2; x++) {
+					QPoint K(x, y);
+					double d0 = distance(T0, K);
+					double d1 = distance(T1, K);
+					double d2 = distance(T2, K);
+					if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+						if (d0 < d1 && d0 < d2) {
+							setPixel(x, y, C0);
+						}
+						else if (d1 < d0 && d1 < d2) {
+							setPixel(x, y, C1);
+						}
+						else {
+							setPixel(x, y, C2);
+						}
+					}
+				}
+			}
+			for (int y = T1.y(); y <= T2.y(); y++) {
+				int x1 = ((y - T1.y()) * (T2.x() - T1.x()) / (T2.y() - T1.y()) + T1.x());
+				int x2 = ((y - P.y()) * (T2.x() - P.x()) / (T2.y() - P.y()) + P.x());
+
+				for (int x = x1; x <= x2; x++) {
+					QPoint K(x, y);
+					double d0 = distance(T0, K);
+					double d1 = distance(T1, K);
+					double d2 = distance(T2, K);
+					if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+						if (d0 < d1 && d0 < d2) {
+							setPixel(x, y, C0);
+						}
+						else if (d1 < d0 && d1 < d2) {
+							setPixel(x, y, C1);
+						}
+						else {
+							setPixel(x, y, C2);
+						}
+					}
+				}
+			}
+		}
+		else {
+			for (int y = T0.y(); y <= T1.y(); y++) {
+				int x1 = ((y - T0.y()) * (P.x() - T0.x()) / (P.y() - T0.y()) + T0.x());
+				int x2 = ((y - T0.y()) * (T1.x() - T0.x()) / (T1.y() - T0.y()) + T0.x());
+
+				for (int x = x1; x <= x2; x++) {
+					QPoint K(x, y);
+					double d0 = distance(T0, K);
+					double d1 = distance(T1, K);
+					double d2 = distance(T2, K);
+					if (isInside(x, y) && isInsideTriangle(T0, T1, T2,K)) {
+						if (d0 < d1 && d0 < d2) {
+							setPixel(x, y, C0);
+						}
+						else if (d1 < d0 && d1 < d2) {
+							setPixel(x, y, C1);
+						}
+						else {
+							setPixel(x, y, C2);
+						}
+					}
+				}
+			}
+			for (int y = T1.y(); y <= T2.y(); y++) {
+				int x1 = ((y - P.y()) * (T2.x() - P.x()) / (T2.y() - P.y()) + P.x());
+				int x2 = ((y - T1.y()) * (T2.x() - T1.x()) / (T2.y() - T1.y()) + T1.x());
+				for (int x = x1; x <= x2; x++) {
+					QPoint K(x, y);
+					double d0 = distance(T0, K);
+					double d1 = distance(T1, K);
+					double d2 = distance(T2, K);
+					if (isInside(x, y) && isInsideTriangle(T0, T1, T2, K)) {
+						if (d0 < d1 && d0 < d2) {
+							setPixel(x, y, C0);
+						}
+						else if (d1 < d0 && d1 < d2) {
+							setPixel(x, y, C1);
+						}
+						else {
+							setPixel(x, y, C2);
+						}
+					}
+				}
+			}
+		}
 	}
 }
 //Clear

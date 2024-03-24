@@ -32,7 +32,7 @@ class ViewerWidget :public QWidget {
 		QImage* getImage() { return img; };
 		bool isEmpty();
 		bool changeSize(int width, int height);
-		bool isInside(int x, int y) { return (x >= 0 && y >= 0 && x <= img->width() && y <= img->height()) ? true : false; }
+		bool isInside(int x, int y) { return (x >= 0 && y >= 0 && x < img->width() && y < img->height()) ? true : false; }
 
 		//Pixel functions
 		void setPixel(int x, int y, uchar r, uchar g, uchar b, uchar a = 255);
@@ -77,7 +77,11 @@ class ViewerWidget :public QWidget {
 
 		//Helper functions
 		double dotProduct(QPoint a, QPoint b) {return a.x() * b.x() + a.y() * b.y(); }
+		double distance(QPoint a, QPoint b) { return sqrt(pow(a.x() - b.x(), 2) + pow(a.y() - b.y(), 2)); }
+		bool isInsideTriangle(QPoint A, QPoint B, QPoint C, QPoint P);
+		double sign(QPoint p1, QPoint p2, QPoint p3) { return (p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y()); }
 		bool Comp_points(QPoint p1, QPoint p2);
+		
 		// Algorithms
 		void DDALine(QPoint start, QPoint end, QColor color);
 		void BresenhamLine(QPoint start, QPoint end, QColor color);
@@ -93,6 +97,10 @@ class ViewerWidget :public QWidget {
 		void Shear(double shx, QColor color); //Skosenie
 		void Flip(QColor color);
 		void Scan_Line(QColor color);
+		void UpperTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2);
+		void LowerTriangle(QPoint A, QPoint B, QPoint C, QColor C0, QColor C1, QColor C2);
+		void Triangle_Fill(QColor color);
+
 		void clear();
 
 	public slots:
