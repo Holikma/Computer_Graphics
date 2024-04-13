@@ -230,7 +230,7 @@ void ViewerWidget::Cyrus_Beck(QColor color) {
 		drawLine(newStart, newEnd, color, 1);
 	}
 }
-void ViewerWidget::Sutherland_Hodgeman(QColor color) {
+QVector<QPoint> ViewerWidget::Sutherland_Hodgeman(QColor color) {
 	QVector<QPoint> W; // Initialize a vector to hold the vertices of the clipped polygon
 	QVector<QPoint> polygon = points;
 	int edges[4] = {0,0,-499,-499};
@@ -280,6 +280,7 @@ void ViewerWidget::Sutherland_Hodgeman(QColor color) {
 		drawLine(polygon[polygon.size() - 1], polygon[0], color, 0);
 	}
 	update();
+	return polygon;
 
 }
 void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType) {
@@ -313,7 +314,8 @@ void ViewerWidget::Render(QVector<QPoint> list, QColor color) {
 			}
 			else if (list.size() > 2) {
 				if (isInside(list[i].x(), list[i].y()) || isInside(list[i + 1].x(), list[i + 1].y())) {
-					Sutherland_Hodgeman(color);
+					QVector<QPoint> list = Sutherland_Hodgeman(color);
+					Fill(list, 0, color);
 				}
 			}
 		}
@@ -324,7 +326,8 @@ void ViewerWidget::Render(QVector<QPoint> list, QColor color) {
 	else {
 		if (list.size() > 2) {
 			if (isInside(list[list.size() - 1].x(), list[list.size() - 1].y()) || isInside(list[0].x(), list[0].y())) {
-				Sutherland_Hodgeman(color);
+				QVector<QPoint> list = Sutherland_Hodgeman(color);
+				Fill(list, 0, color);
 			}
 		}
 	}

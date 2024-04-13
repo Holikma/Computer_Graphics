@@ -87,7 +87,7 @@ class ViewerWidget :public QWidget {
 		void BresenhamLine(QPoint start, QPoint end, QColor color);
 		void BresenhamCircle(QPoint start, QPoint end, QColor color);
 		void Cyrus_Beck(QColor color);
-		void Sutherland_Hodgeman(QColor color);
+		QVector<QPoint> Sutherland_Hodgeman(QColor color);
 		
 		//Transfomations
 		void Translation(int dx, int dy, QColor color); //Orezávanie
